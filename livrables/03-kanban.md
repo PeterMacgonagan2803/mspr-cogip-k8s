@@ -28,7 +28,7 @@ La **revue technique** est réalisée collectivement lors de sessions régulièr
 | KAN-08 | Ansible : rôle `nfs-server` (stockage persistant)               | Dev 3   | Haute    |
 | KAN-09 | Ansible : rôle `k3s-server` (control-plane)                     | Dev 1   | Haute    |
 | KAN-10 | Ansible : rôle `k3s-agent` (workers)                            | Dev 1   | Haute    |
-| KAN-11 | Ansible : rôle `deploy-odoo` (Helm, cert-manager, NFS prov)     | Dev 2   | Haute    |
+| KAN-11 | Ansible : rôle `deploy-odoo` (Helm Bitnami Odoo, NFS prov)     | Dev 2   | Haute    |
 | KAN-12 | Ansible : Ingress Traefik HTTPS pour Odoo                       | Dev 2   | Haute    |
 | KAN-13 | Ansible Vault : sécurisation des secrets                        | Dev 4   | Moyenne  |
 | KAN-14 | CI GitHub Actions : validation IaC automatique                  | Dev 4   | Moyenne  |

@@ -14,7 +14,7 @@
 | T8 | Rôle Ansible `nfs-server` | Dev 3 | 1h | T7 |
 | T9 | Rôle Ansible `k3s-server` (control-plane) | Dev 1 | 2h | T7 |
 | T10 | Rôle Ansible `k3s-agent` (workers) | Dev 1 | 1h | T9 |
-| T11 | Rôle Ansible `deploy-odoo` (NFS prov, cert-manager, Helm) | Dev 2 | 2.5h | T9, T8 |
+| T11 | Rôle Ansible `deploy-odoo` (NFS prov, Helm Bitnami Odoo) | Dev 2 | 2.5h | T9, T8 |
 | T12 | Tests d'intégration et débogage | Équipe | 2h | T10, T11 |
 | T13 | CI GitHub Actions (validation IaC) | Dev 4 | 1h | T3 |
 | T14 | Rédaction du dossier de rendu | Équipe | 2h | T12 |

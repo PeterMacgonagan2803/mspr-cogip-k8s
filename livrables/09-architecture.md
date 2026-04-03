@@ -4,7 +4,7 @@
 
 La solution proposee a la COGIP repose sur une architecture bare-metal virtualisee via Proxmox VE (serveur dedie OVH), hebergeant un cluster Kubernetes K3s de 3 noeuds, avec un serveur NFS dedie au stockage persistant. Le reseau interne utilise un bridge NAT (`vmbr1`) avec port-forwarding vers l'exterieur.
 
-**Acces applicatif** : par defaut, l'utilisateur accede a Odoo en **HTTP** sur `http://odoo.local` (resolution DNS locale vers l'IP publique du serveur, ports 80 forwards vers Traefik). Le deploiement de **cert-manager** et le routage **HTTPS** sont **optionnels** (variable `enable_cert_manager`, desactivee par defaut dans le projet), a activer lorsque les registres d'images et l'emission de certificats sont stables.
+**Acces applicatif** : l'utilisateur accede a Odoo en **HTTPS** sur `https://odoo.local` (certificat **autosigne** fourni par le chart Bitnami ; accepter l'avertissement du navigateur). Le NAT Proxmox redirige en general les ports **443** (et souvent 80) vers le control-plane ou le service expose par Traefik.
 
 **Plan de reprise d'activite (PRA)** : l'infrastructure est entierement reproductible via le template Proxmox, Terraform et Ansible ; le temps de reconstruction de zero jusqu'a une interface Odoo utilisable est estime a **environ 20 minutes** (voir section 7).
 

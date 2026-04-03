@@ -80,12 +80,10 @@ La societe COGIP a besoin d'une infrastructure evolutive, performante et resilie
 - Une VM NFS dediee avec **disque 50 Go** fournit les volumes persistants via un `StorageClass` automatique (les noeuds K3s utilisent des disques **30 Go** chacun pour le systeme et les donnees locales du cluster).
 - Alternatives plus lourdes (Longhorn, OpenEBS) ecartees car trop gourmandes en ressources pour un PoC.
 
-## 6. Certificats TLS : cert-manager (optionnel)
+## 6. Certificats TLS (PoC)
 
-- **cert-manager n'est plus une dependance obligatoire** du deploiement : il est **parametrable** via la variable Ansible `enable_cert_manager`, qui **vaut `false` par defaut**.
-- **Motif du defaut desactive (PoC)** : le chart cert-manager et ses images s'appuient notamment sur le registre **quay.io**, qui a connu des indisponibilites pendant la realisation du projet ; desactiver cert-manager par defaut garantit un deploiement reproductible sans bloquer sur une image externe.
-- **Lorsque `enable_cert_manager: true`** : le role deploie cert-manager (Helm Jetstack), cree un `ClusterIssuer` autosigne, et l'Ingress expose alors le TLS (certificats autosignes adaptes au laboratoire). En production, le meme mecanisme permettrait de basculer vers Let's Encrypt en adaptant l'issuer.
-- **Acces applicatif sans cert-manager** : Odoo reste pleinement utilisable en **HTTP** (par exemple `http://odoo.local`) pour le PoC et les demonstrations ; le cahier des charges fonctionnel est respecte sans TLS obligatoire.
+- Le chart **Bitnami Odoo** est configure avec **`ingress.tls: true`** et **`ingress.selfSigned: true`** : Helm genere un secret TLS **autosigne** pour l'Ingress **Traefik** (entree `websecure`), ce qui repond au sujet (HTTPS avec certificat accepte en demonstration).
+- En production, on remplacerait ce mecanisme par un issuer **Let's Encrypt** (ou certificats d'entreprise) sans changer la structure generale (Ingress + TLS).
 
 ## 7. Synthese de la chaine d'automatisation
 
@@ -104,11 +102,10 @@ Image cloud Ubuntu 22.04
                                                             |
                                                             v
                                                       [Ansible + Helm/K8s]  -->  NFS Provisioner
-                                                                                  [cert-manager] (optionnel)
-                                                                                  Odoo + PostgreSQL (manifests K8s, images officielles)
-                                                                                  Ingress : HTTP par defaut ; HTTP+HTTPS si cert-manager active
+                                                                                  Chart Bitnami Odoo (PostgreSQL integre)
+                                                                                  Ingress Traefik : HTTPS (TLS autosigne chart)
 ```
 
-**Chaines obligatoires vs optionnelles :** Terraform, Ansible, K3s, NFS provisioner, PostgreSQL, Odoo et Ingress **HTTP** forment le socle minimal. **cert-manager** et le bloc **TLS** de l'Ingress sont **optionnels** (desactives par defaut).
+**Chaîne minimale :** Terraform, Ansible, K3s, NFS provisioner, chart **Bitnami Odoo** (Helm), Ingress **HTTPS** (PoC).
 
-**Temps de reconstruction complete (PRA) estime : ~20 minutes** depuis zero (template + `terraform apply` + playbooks Ansible jusqu'a Odoo joignable en HTTP), avec une commande principale par grande etape (Terraform puis Ansible), selon la charge du stockage Proxmox et le reseau.
+**Temps de reconstruction complete (PRA) estime :** variable selon lab (souvent ~20–60 min avec Packer ISO), aligne sur `deploy-all.py` / guide.

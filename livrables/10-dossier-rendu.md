@@ -42,7 +42,7 @@ La solution proposee : un cluster **Kubernetes K3s** deploye via **Terraform + A
 - **Terraform** : Provisionnement declaratif de l'infrastructure (provider `bpg/proxmox`)
 - **Ansible** : Configuration agentless et deploiement applicatif
 - **NFS** : Stockage persistant leger pour le PoC
-- **cert-manager** : **Optionnel** -- gestion des certificats TLS (autosignes pour le PoC) ; desactive par defaut (`enable_cert_manager=false`) pour eviter une dependance critique au registre quay.io en cas d'indisponibilite ; a activer lorsque l'on souhaite exposer Odoo en HTTPS avec emission automatique de certificats
+- **Helm Bitnami Odoo** : deploiement conforme au sujet via `kubernetes.core.helm` ; **TLS autosigne** integre au chart (`ingress.selfSigned`) sans cert-manager
 
 ## 3. Organisation du projet
 
@@ -105,17 +105,14 @@ Deploiement automatise du cluster K3s (1 control-plane + 2 workers) via 3 roles 
 Le role de deploiement applique notamment :
 
 - **NFS Provisioner** via Helm (`nfs-subdir-external-provisioner`) pour la `StorageClass` dynamique
-- **Odoo 18** et **PostgreSQL 17** via **manifests Kubernetes natifs** (Deployments, Services, PVC, Ingress) et images officielles **docker.io** (`odoo:18`, `postgres:17`) -- **sans** chart Helm Bitnami pour la couche applicative Odoo / base de donnees
-- **Ingress Traefik** en **HTTP** par defaut (`http://odoo.local` vers le service Odoo)
-- **cert-manager** : **optionnel**, conditionne par la variable Ansible `enable_cert_manager` (defaut `false`) ; lorsqu'il est active, Helm installe cert-manager et les ressources TLS associees (ClusterIssuer autosigne, etc.)
-
-Cette separation permet de garder un chemin de deploiement stable meme lorsque les registres tiers (par exemple quay.io pour certaines images de cert-manager) subissent des erreurs transitoires.
+- **Chart Bitnami Odoo** (Helm) : application Odoo + PostgreSQL integre, persistance sur `nfs-client`
+- **Ingress Traefik** : exposition **HTTPS** (`https://odoo.local`) avec certificat **autosigne** genere par le chart (avertissement navigateur attendu en PoC)
 
 ## 10. Architecture globale
 
 > Detail complet : voir [09-architecture.md](./09-architecture.md)
 
-Schema complet de l'architecture reseau (NAT, vmbr1, port-forwarding), des flux, des composants Kubernetes deployes, des tailles de disques (30 Go / 50 Go) et du chemin d'acces HTTP par defaut.
+Schema complet de l'architecture reseau (NAT, vmbr1, port-forwarding), des flux, des composants Kubernetes deployes, des tailles de disques (30 Go / 50 Go) et du chemin d'acces **HTTPS** vers Odoo.
 
 ## 11. Captures d'ecran
 
@@ -131,11 +128,11 @@ Les captures ci-dessous illustrent les preuves de deploiement ; les fichiers ima
 
 ### 11.3 kubectl get pods -A
 
-**Description** : Sortie de `kubectl get pods -A` listant l'ensemble des pods par namespace : `kube-system` (CoreDNS, Traefik, metrics-server, etc.), `storage` (NFS provisioner), `odoo` (PostgreSQL et Odoo en Running), et eventuellement `cert-manager` **uniquement** si la variable `enable_cert_manager` a ete activee pour la capture.
+**Description** : Sortie de `kubectl get pods -A` : `kube-system`, `storage` (NFS provisioner), `odoo` (workloads Bitnami / Odoo en Running).
 
 ### 11.4 Interface Odoo accessible
 
-**Description** : Capture du navigateur sur `**http://odoo.local`** (ou l'hote equivalent) affichant l'**ecran de connexion ou le tableau de bord Odoo**, confirmant que l'Ingress Traefik route correctement le trafic HTTP vers le service applicatif.
+**Description** : Capture du navigateur sur `**https://odoo.local`** (certificat autosigne accepte) montrant l'ecran de connexion ou le tableau de bord Odoo.
 
 ### 11.5 Terraform apply
 
@@ -152,12 +149,12 @@ Les captures ci-dessous illustrent les preuves de deploiement ; les fichiers ima
 | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Provider Terraform `telmate/proxmox` : erreurs de permissions (`VM.Monitor`) meme avec des tokens privilegies                            | Migration vers le provider `bpg/proxmox` qui gere mieux l'authentification par mot de passe et le SSH natif                                                                                                                                                      |
 | Packer : echec de l'autoinstall Ubuntu (l'installeur manuel se lancait au lieu du mode cloud-init)                                       | Abandon de Packer + ISO au profit d'un script utilisant l'image cloud Ubuntu qcow2 avec cloud-init natif                                                                                                                                                         |
-| Images Docker Bitnami Odoo : tags obsoletes non disponibles sur Docker Hub                                                               | Remplacement du chart Helm Bitnami par des **manifests Kubernetes natifs** avec les images officielles `odoo:18` et `postgres:17`                                                                                                                                |
+| Images / charts : evolution des tags Bitnami                                                                                          | Epinglage raisonnable des versions Helm ou documentation des `helm repo update` dans le playbook                                                                 |
 | Timeout SSH lors de l'execution d'Ansible depuis Windows vers les VMs via Proxmox                                                        | Execution d'Ansible directement sur le serveur Proxmox (plus proche des VMs) avec scripts Python/Paramiko pour l'orchestration                                                                                                                                   |
 | Traefik retournait 404 en HTTP : l'Ingress ne routait que le trafic HTTPS (`websecure`)                                                  | Ajout d'un IngressRoute Traefik CRD pour le trafic HTTP (`web`) en complement de l'Ingress standard                                                                                                                                                              |
 | QEMU Guest Agent : Terraform bloquait indefiniment en attendant l'agent non installe                                                     | Desactivation de l'agent dans la configuration Terraform (`agent { enabled = false }`)                                                                                                                                                                           |
 | Reseau Proxmox : VMs sur reseau prive non accessibles depuis l'exterieur                                                                 | Configuration NAT avec `vmbr1` (bridge prive) et regles iptables pour le port-forwarding (80, 443)                                                                                                                                                               |
-| **Registre quay.io indisponible ou erreurs HTTP 502** lors du pull d'images necessaires a **cert-manager**, bloquant le deploiement Helm | **cert-manager rendu optionnel** : variable `enable_cert_manager` par defaut a `false` ; deploiement par defaut en **HTTP** via Traefik sans dependre de quay.io pour le PoC ; reactivation de cert-manager et HTTPS lorsque l'infrastructure externe est stable |
+| Dependance a des registres d'images externes                                                                                           | Priorite au chart Bitnami documente ; pare-feu / proxy documentes dans le guide                                                                                  |
 
 
 ## 13. Conclusion
@@ -167,7 +164,7 @@ Ce projet a permis de mettre en place une infrastructure complete et entierement
 - **Evolutivite** : Ajout de workers via simple modification Terraform
 - **Resilience** : Kubernetes redemarre automatiquement les pods en cas de panne
 - **Reproductibilite** : PRA estime a **environ 20 minutes** depuis zero (template, Terraform, Ansible K3s, Ansible Odoo, initialisation), documente dans l'architecture et aligne sur les mesures reelles de deploiement
-- **Securite** : Secrets proteges (Ansible Vault), acces SSH par cle ; **acces applicatif en HTTP par defaut** (`http://odoo.local`) pour le PoC ; **HTTPS et cert-manager disponibles mais optionnels** selon `enable_cert_manager`
+- **Securite** : Secrets hors depot (`terraform.tfvars`, `vault.yml`), acces SSH par cle ; **HTTPS autosigne** pour le PoC (`https://odoo.local`)
 
 Le script **deploy-all.py** (`setup/deploy-all.py`) et les webhooks associes materialisent la demarche d'automatisation et de tracabilite demandee dans un contexte professionnel ou pedagogique.
 
@@ -182,7 +179,7 @@ Les codes sources complets sont disponibles dans le depot Git :
   - `playbooks/site.yml` : Orchestrateur principal
   - `roles/k3s-server/` : Role control-plane
   - `roles/k3s-agent/` : Role workers
-  - `roles/deploy-odoo/` : Deploiement Odoo + PostgreSQL via manifests K8s officiels ; NFS provisioner ; cert-manager conditionnel
+  - `roles/deploy-odoo/` : NFS provisioner Helm + chart **Bitnami Odoo** (Helm) + Ingress TLS autosigne
 - `packer/` : Approche alternative Packer (conservee pour reference)
 - `livrables/` : Documentation detaillee par mission
 
