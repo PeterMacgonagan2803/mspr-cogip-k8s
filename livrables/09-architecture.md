@@ -35,7 +35,7 @@ La solution proposee a la COGIP repose sur une architecture bare-metal virtualis
 |  +------+    +------+    +------+    +----------+             |
 |  | CP   |    | W1   |    | W2   |    | NFS      |             |
 |  |.10.10|    |.10.11|    |.10.12|    |.10.13    |             |
-|  |2C/4G |    |2C/4G |    |2C/4G |    |1C/1G    |             |
+|  |2C/4G |    |2C/4G |    |2C/4G |    |2C/2G    |             |
 |  |30 Go |    |30 Go |    |30 Go |    |50 Go    |             |
 |  +--+---+    +--+---+    +--+---+    +----+-----+             |
 |     |          |          |               |                   |
