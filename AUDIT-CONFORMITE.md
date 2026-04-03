@@ -25,7 +25,7 @@ Verification exhaustive du projet par rapport au cahier des charges de la MSPR.
 | Control-plane | 2 coeurs, 2-4 Go RAM, disque adapte (souvent 20-30 Go selon sujet) | 2 CPU, 4 Go, **30 Go** | OK |
 | Workers (x2) | 2 coeurs, 4 Go RAM, disque adapte | 2 CPU, 4 Go, **30 Go** | OK |
 | Distribution K8s | K3s / RKE2 / K0s / MicroK8s | K3s | OK |
-| Stockage NFS | nfs-subdir-external-provisioner | VM NFS (**50 Go**) + provisioner Helm | OK |
+| Stockage NFS | nfs-subdir-external-provisioner | VM NFS (**2 vCPU, 2 Go, 50 Go** disque) + provisioner Helm | OK |
 | Odoo deploye | Application Odoo fonctionnelle | Chart **Bitnami Odoo** (PostgreSQL integre) via `kubernetes.core.helm` | OK |
 | Ingress / TLS | Routage vers l'app, TLS autosigne | **Traefik** + Ingress Helm Bitnami (`tls` + `selfSigned`) | OK |
 | Git versionne | Packer / Terraform / Ansible | Depôt Git équipe | OK |

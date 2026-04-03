@@ -87,7 +87,7 @@ Deploiement de 4 VMs via `for_each` avec generation automatique de l'inventaire 
 | k3s-server   | 2   | 4 Go | **30 Go** | Control-plane |
 | k3s-worker-1 | 2   | 4 Go | **30 Go** | Worker        |
 | k3s-worker-2 | 2   | 4 Go | **30 Go** | Worker        |
-| nfs-server   | 1   | 1 Go | **50 Go** | Stockage NFS  |
+| nfs-server   | 2   | 2 Go | **50 Go** | Stockage NFS  |
 
 
 Les disques **30 Go** sur les noeuds K3s offrent une marge suffisante pour les couches systeme, etcd, kubelet et le pull d'images. Le serveur NFS en **50 Go** dimensionne le stockage persistant partage (donnees Odoo et PostgreSQL) pour le PoC.
