@@ -13,11 +13,11 @@ La solution proposee a la COGIP repose sur une architecture bare-metal virtualis
 ```
                     +---------------------+
                     |   Utilisateur        |
-                    |   http://odoo.local  |
+                    | https://odoo.local   |
                     +----------+----------+
                                |
-                               | HTTP (port 80) par defaut
-                               | HTTPS (443) si cert-manager active
+                               | HTTPS (443) — TLS autosigne (chart Bitnami)
+                               | HTTP (80) possible selon NAT / tests
                                v
 +--------------------------------------------------------------+
 |              Serveur Dedie OVH (Proxmox VE)                  |
@@ -45,23 +45,16 @@ La solution proposee a la COGIP repose sur une architecture bare-metal virtualis
 |           |  +-------------------------+  |                   |
 |           |  | kube-system             |  |                   |
 |           |  |  +- CoreDNS             |  |                   |
-|           |  |  +- Traefik (Ingress) <-+- HTTP (defaut)        |
+|           |  |  +- Traefik (Ingress) <-+- HTTPS websecure (PoC) |
 |           |  |  +- ServiceLB           |  |                   |
 |           |  |  +- Metrics Server      |  |                   |
 |           |  +-------------------------+  |                   |
 |           |  | storage                 |  |                   |
 |           |  |  +- NFS Provisioner ----+--->  NFS mount       |
 |           |  +-------------------------+                      |
-|           |  | cert-manager (OPTIONNEL)|                      |
-|           |  |  si enable_cert_manager|                      |
-|           |  |  +- ClusterIssuer      |                      |
-|           |  |    (selfsigned)         |                      |
-|           |  +-------------------------+                      |
-|           |  | odoo                    |                      |
-|           |  |  +- PostgreSQL (pod)    |                      |
-|           |  |    image postgres:17   |                      |
-|           |  |  +- Odoo (pod)          |                      |
-|           |  |    image odoo:18        |                      |
+|           |  | odoo (Helm Bitnami)     |                      |
+|           |  |  +- PostgreSQL (subchart)|                      |
+|           |  |  +- Odoo workload      |                      |
 |           |  |  +- PVC --> NFS PV      |                      |
 |           |  +-------------------------+                      |
 |           |                                                   |
@@ -75,22 +68,19 @@ Les disques des trois noeuds K3s (control-plane et workers) sont dimensionnes a 
 ### Acces utilisateur a Odoo
 
 ```
-Utilisateur --> DNS local (odoo.local -> IP publique OVH)
-            --> iptables NAT sur Proxmox (port 80 en configuration standard)
-            --> Traefik sur K3s (Ingress Controller, entrypoint web)
-            --> Service ClusterIP odoo (port 8069)
-            --> Pod Odoo
-            --> Pod PostgreSQL (connexion interne port 5432)
+Utilisateur --> DNS local (odoo.local -> IP publique)
+            --> iptables NAT Proxmox (souvent 443 -> Traefik)
+            --> Traefik (entrypoint websecure, TLS secret Helm)
+            --> Service Odoo (chart Bitnami)
+            --> Pods Odoo / PostgreSQL
             --> PVC -> NFS PV -> VM NFS (/srv/nfs/k8s)
 ```
-
-Lorsque **cert-manager** est active et qu'un certificat est associe a l'Ingress, le meme chemin peut etre expose en **HTTPS** sur le port 443 via l'entrypoint `websecure` de Traefik ; ce n'est pas le chemin par defaut du depot.
 
 ### Communication inter-noeuds
 
 | Source | Destination | Port | Protocole |
 |--------|-------------|------|-----------|
-| Exterieur -> Proxmox | iptables NAT | 80 (defaut), 443 (optionnel TLS) | TCP |
+| Exterieur -> Proxmox | iptables NAT | 80, 443 (HTTPS PoC) | TCP |
 | Proxmox NAT -> Control-plane | Traefik | 80, 443 | TCP |
 | Workers -> Control-plane | API Server | 6443 | HTTPS |
 | Control-plane -> Workers | Kubelet | 10250 | HTTPS |
@@ -102,17 +92,14 @@ Lorsque **cert-manager** est active et qu'un certificat est associe a l'Ingress,
 | Namespace | Composant | Type | Role |
 |-----------|-----------|------|------|
 | `kube-system` | CoreDNS | Deployment | Resolution DNS intra-cluster |
-| `kube-system` | Traefik | Deployment | Ingress Controller ; HTTP par defaut, TLS si cert-manager |
+| `kube-system` | Traefik | Deployment | Ingress Controller (HTTP + HTTPS / websecure) |
 | `kube-system` | ServiceLB | DaemonSet | LoadBalancer L4 |
 | `kube-system` | Metrics Server | Deployment | Metriques CPU/RAM |
 | `storage` | NFS Provisioner | Deployment | StorageClass dynamique (Helm nfs-subdir-external-provisioner) |
-| `cert-manager` | cert-manager | Deployment | **OPTIONNEL** -- deploye uniquement si `enable_cert_manager=true` |
-| `cert-manager` | ClusterIssuer | CR | Emetteur autosigne (PoC) -- present seulement avec cert-manager |
-| `odoo` | PostgreSQL | Deployment | Base de donnees, image officielle **postgres:17** |
-| `odoo` | Odoo | Deployment | Application ERP, image officielle **odoo:18** |
-| `odoo` | Ingress | Ingress | Route **HTTP** vers Odoo par defaut ; HTTPS si TLS configure |
+| `odoo` | Release Helm `odoo` | Helm | Chart Bitnami (Odoo + PostgreSQL, persistance NFS) |
+| `odoo` | Ingress | Ingress | **HTTPS** TLS autosigne (valeurs chart) |
 
-Les workloads **Odoo** et **PostgreSQL** sont deployes via **manifests Kubernetes natifs** (Deployments, Services, PVC, Ingress), et non via le chart Helm Bitnami, afin de matriser les versions d'images et d'eviter la dependance a des tags de chart obsoletes.
+Les workloads applicatifs sont deployes via le **chart Helm Bitnami Odoo** (`kubernetes.core.helm`), avec persistance sur la **StorageClass NFS**.
 
 ## 5. Stockage
 
@@ -150,7 +137,7 @@ Les etapes suivantes decrivent l'ordre logique de reconstruction ; les durees so
 |Cloud-  |  |4 VMs      |  |Cluster 3     |  |NFS Provisioner |  |Base + admin |
 |init    |  |30/50 Go   |  |noeuds        |  |Manifests PG/   |  |via script   |
 |template|  |Inventaire |  |              |  |Odoo, Ingress   |  |Python       |
-|VM 9000 |  |Ansible    |  |              |  |cert-manager si |  |(optionnel   |
+|VM 9000 |  |Ansible    |  |              |  |Helm Odoo Bitnami|  |HTTPS PoC    |
 |        |  |           |  |              |  |variable true   |  |si necessaire)|
 +--------+  +-----------+  +--------------+  +----------------+  +-------------+
 
@@ -159,4 +146,4 @@ Temps total de reconstruction (zero -> Odoo accessible en HTTP) : ~20 minutes
 
 Le script **`setup/deploy-all.py`** (lorsqu'il est utilise) enchaine ces phases avec des notifications par **webhook** (succes ou echec), ce qui automatise le deploiement complet et facilite l'integration dans une chaine d'integration ou la supervision humaine.
 
-**Synthese des durees** : creation / clone du template (~1 min), `terraform apply` pour les quatre VMs (~2 min), playbooks Ansible cluster K3s (~3 min), role deploiement Odoo (NFS, manifests applicatifs, Ingress HTTP ; cert-manager conditionnel) (~5 min), initialisation de la base et premier acces (~5 min). Les variations dependent du reseau, du cache d'images sur les noeuds et de la disponibilite des registres (Docker Hub, quay.io pour cert-manager si active).
+**Synthese des durees** : creation / clone du template, `terraform apply` (quatre VMs), playbooks Ansible cluster K3s, role deploiement Odoo (NFS + Helm Bitnami + Ingress HTTPS), puis premier acces navigateur. Les variations dependent du reseau, du stockage Proxmox et du pull d'images (Docker Hub / registres Bitnami).
