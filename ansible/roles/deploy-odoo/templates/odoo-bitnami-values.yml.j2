@@ -1,0 +1,47 @@
+# Valeurs Helm — chart bitnami/odoo (PoC MSPR COGIP / Tesker)
+# Ingress Traefik (K3s) + certificat TLS autosigné généré par le chart (selfSigned)
+
+global:
+  defaultStorageClass: "{{ nfs_storage_class | default('nfs-client') }}"
+
+odooEmail: "{{ odoo_email | default('admin@cogip.local') }}"
+odooPassword: "{{ odoo_bitnami_admin_password }}"
+
+postgresql:
+  enabled: true
+  auth:
+    password: "{{ odoo_bitnami_pg_password }}"
+  primary:
+    persistence:
+      enabled: true
+      storageClass: "{{ nfs_storage_class | default('nfs-client') }}"
+      size: 5Gi
+
+persistence:
+  enabled: true
+  storageClass: "{{ nfs_storage_class | default('nfs-client') }}"
+  size: 5Gi
+
+replicaCount: 1
+
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  hostname: "{{ odoo_domain | default('odoo.local') }}"
+  path: /
+  pathType: Prefix
+  tls: true
+  selfSigned: true
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+
+networkPolicy:
+  enabled: false
+
+resources:
+  requests:
+    cpu: "{{ odoo_cpu_request | default('500m') }}"
+    memory: "{{ odoo_memory_request | default('512Mi') }}"
+  limits:
+    cpu: "{{ odoo_cpu_limit | default('1') }}"
+    memory: "{{ odoo_memory_limit | default('1Gi') }}"

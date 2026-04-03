@@ -1,0 +1,40 @@
+---
+- name: Installer le serveur NFS
+  ansible.builtin.apt:
+    name:
+      - nfs-kernel-server
+      - nfs-common
+    state: present
+    update_cache: yes
+
+- name: Créer le répertoire d'export NFS
+  ansible.builtin.file:
+    path: "{{ nfs_export_path | default('/srv/nfs/k8s') }}"
+    state: directory
+    mode: '0777'
+    owner: nobody
+    group: nogroup
+
+- name: Configurer l'export NFS
+  ansible.builtin.lineinfile:
+    path: /etc/exports
+    line: "{{ nfs_export_path | default('/srv/nfs/k8s') }} *(rw,sync,no_subtree_check,no_root_squash)"
+    state: present
+  notify: Redémarrer NFS
+
+- name: Activer et démarrer le service NFS
+  ansible.builtin.systemd:
+    name: nfs-kernel-server
+    state: started
+    enabled: yes
+
+- name: Exporter les partages NFS
+  ansible.builtin.command: exportfs -ra
+  changed_when: false
+
+- name: Ouvrir le firewall pour NFS (si UFW actif)
+  community.general.ufw:
+    rule: allow
+    port: "2049"
+    proto: tcp
+  ignore_errors: yes

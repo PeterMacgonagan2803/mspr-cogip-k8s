@@ -1,0 +1,63 @@
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/*.tfplan
+# Conserver terraform/.terraform.lock.hcl dans Git (reproductibilite des providers)
+terraform/terraform.tfvars
+terraform/crash.log
+
+# Packer
+packer/*.log
+packer/output-*/
+packer/packer_cache/
+
+# Ansible
+ansible/*.retry
+ansible/**/*.retry
+
+# Ansible Vault (copier vault.yml.example -> vault.yml localement)
+ansible/group_vars/all/vault.yml
+
+# Secrets
+*.pem
+*.key
+id_rsa*
+id_ansible*
+*.env
+.env
+secrets/
+credentials.json
+.vault_pass
+ansible/inventory/hosts.yml
+
+# Setup (fichiers avec credentials locaux)
+setup/*.tfvars*
+!setup/*.example
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs locaux (deploy / packer sur poste dev)
+setup/_*.log
+
+# Captures / brouillons locaux
+setup/image.png
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Kubeconfig
+kubeconfig
+kubeconfig.yml
+kubeconfig.yaml

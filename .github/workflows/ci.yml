@@ -1,0 +1,77 @@
+name: CI - Validation IaC
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  terraform-validate:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.0"
+
+      - name: Terraform Init
+        working-directory: terraform
+        run: terraform init -backend=false
+
+      - name: Terraform Format Check
+        working-directory: terraform
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: terraform
+        run: terraform validate
+
+  packer-validate:
+    name: Packer Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-packer@main
+        with:
+          version: "1.10.0"
+
+      - name: Packer Init
+        working-directory: packer
+        run: packer init .
+
+      - name: Packer Format Check
+        working-directory: packer
+        run: packer fmt -check .
+
+      - name: Packer Validate
+        working-directory: packer
+        run: packer validate -syntax-only .
+
+  ansible-lint:
+    name: Ansible Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer Ansible et ansible-lint
+        run: pip install ansible ansible-lint
+
+      - name: Inventaire factice pour ansible-lint
+        working-directory: ansible
+        run: cp inventory/hosts.yml.example inventory/hosts.yml
+
+      - name: Installer les collections Galaxy
+        working-directory: ansible
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: Ansible Lint
+        working-directory: ansible
+        run: ansible-lint playbooks/ roles/

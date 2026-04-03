@@ -1,0 +1,37 @@
+# =============================================================================
+# Configuration Proxmox - MSPR COGIP
+# =============================================================================
+# Copiez ce fichier en terraform.tfvars et adaptez les valeurs a votre infra.
+# NE COMMITTEZ JAMAIS terraform.tfvars (contient des secrets)
+# =============================================================================
+
+# --- Connexion Proxmox (provider bpg/proxmox) ---
+proxmox_url      = "https://proxmox.local:8006"
+proxmox_user     = "root@pam"
+proxmox_password = "VOTRE_MOT_DE_PASSE"
+proxmox_node     = "pve"
+
+# --- Template & Stockage ---
+template_name  = "ubuntu-k3s-template"
+storage_pool   = "local"
+network_bridge = "vmbr1"
+
+# --- Acces SSH aux VMs ---
+ssh_user             = "ubuntu"
+ssh_public_key       = "ssh-ed25519 AAAA... user@host"
+ssh_private_key_path = "~/.ssh/id_ansible"
+
+# --- Reseau ---
+gateway    = "10.10.10.1"
+nameserver = "8.8.8.8"
+
+# --- Adresses IP des VMs (format CIDR: IP/MASQUE) ---
+ip_control_plane = "10.10.10.10/24"
+ip_worker_1      = "10.10.10.11/24"
+ip_worker_2      = "10.10.10.12/24"
+ip_nfs           = "10.10.10.13/24"
+
+# --- Versions & Domaine ---
+k3s_version     = "v1.29.2+k3s1"
+odoo_domain     = "odoo.local"
+nfs_export_path = "/srv/nfs/k8s"

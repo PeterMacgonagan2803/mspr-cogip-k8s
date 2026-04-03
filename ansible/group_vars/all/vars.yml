@@ -1,0 +1,23 @@
+---
+# =============================================================================
+# Variables globales - MSPR COGIP (TPRE961 Infra)
+# =============================================================================
+# Mots de passe : definir vault_odoo_password / vault_pg_password dans vault.yml
+# (copie de vault.yml.example) ou les surcharger via Ansible Vault.
+# =============================================================================
+
+k3s_version: "v1.29.2+k3s1"
+
+odoo_domain: "odoo.local"
+odoo_email: "admin@cogip.local"
+
+odoo_bitnami_admin_password: "{{ vault_odoo_password | default('admin') }}"
+odoo_bitnami_pg_password: "{{ vault_pg_password | default('postgres') }}"
+
+nfs_export_path: /srv/nfs/k8s
+nfs_storage_class: nfs-client
+
+odoo_cpu_request: "500m"
+odoo_cpu_limit: "1"
+odoo_memory_request: "512Mi"
+odoo_memory_limit: "1Gi"

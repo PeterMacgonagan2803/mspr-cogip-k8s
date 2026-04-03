@@ -1,0 +1,60 @@
+---
+- name: Vérifier si K3s est déjà installé
+  ansible.builtin.stat:
+    path: /usr/local/bin/k3s
+  register: k3s_binary
+
+- name: Installer K3s en mode server (control-plane)
+  ansible.builtin.shell: |
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="{{ k3s_version }}" sh -s - server \
+      --write-kubeconfig-mode 644 \
+      --tls-san {{ ansible_host }} \
+      --node-name {{ inventory_hostname }} \
+      --cluster-init
+  args:
+    creates: /usr/local/bin/k3s
+  environment:
+    INSTALL_K3S_EXEC: "server"
+
+- name: Attendre que K3s soit opérationnel
+  ansible.builtin.wait_for:
+    path: /etc/rancher/k3s/k3s.yaml
+    timeout: 120
+
+- name: Attendre que le noeud soit Ready
+  ansible.builtin.shell: |
+    kubectl get nodes {{ inventory_hostname }} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+  register: node_ready
+  until: node_ready.stdout == "True"
+  retries: 30
+  delay: 10
+  changed_when: false
+
+- name: Récupérer le token K3s pour les agents
+  ansible.builtin.slurp:
+    src: /var/lib/rancher/k3s/server/node-token
+  register: k3s_token_raw
+
+- name: Stocker le token K3s
+  ansible.builtin.set_fact:
+    k3s_token: "{{ k3s_token_raw.content | b64decode | trim }}"
+    k3s_server_url: "https://{{ ansible_host }}:6443"
+
+- name: Récupérer le kubeconfig
+  ansible.builtin.slurp:
+    src: /etc/rancher/k3s/k3s.yaml
+  register: kubeconfig_raw
+
+- name: Sauvegarder le kubeconfig en local
+  ansible.builtin.copy:
+    content: "{{ kubeconfig_raw.content | b64decode | replace('127.0.0.1', ansible_host) }}"
+    dest: /tmp/kubeconfig-mspr.yml
+    mode: '0600'
+  delegate_to: localhost
+  become: false
+
+- name: Installer Helm sur le control-plane
+  ansible.builtin.shell: |
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  args:
+    creates: /usr/local/bin/helm

@@ -1,0 +1,30 @@
+---
+# =============================================================================
+# Playbook principal - Déploiement complet MSPR COGIP
+# =============================================================================
+# Ce playbook orchestre l'ensemble du déploiement :
+#   1. Configuration commune de toutes les VMs
+#   2. Installation du serveur NFS
+#   3. Déploiement du cluster K3s (control-plane + workers)
+#   4. Déploiement d'Odoo et de ses dépendances
+#
+# Usage: ansible-playbook playbooks/site.yml
+# =============================================================================
+
+- name: "Phase 1 : Configuration de base de toutes les VMs"
+  hosts: all
+  become: true
+  roles:
+    - common
+
+- name: "Phase 2 : Installation du serveur NFS"
+  hosts: nfs
+  become: true
+  roles:
+    - nfs-server
+
+- name: "Phase 3 : Déploiement du cluster K3s"
+  import_playbook: k3s-cluster.yml
+
+- name: "Phase 4 : Déploiement d'Odoo sur le cluster"
+  import_playbook: deploy-odoo.yml

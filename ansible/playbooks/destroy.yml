@@ -1,0 +1,91 @@
+---
+# =============================================================================
+# Playbook de destruction - Nettoyage complet
+# =============================================================================
+# Supprime Odoo, les dépendances Helm, et réinitialise K3s.
+# Après ce playbook, lancer 'terraform destroy' pour supprimer les VMs.
+#
+# Usage: ansible-playbook playbooks/destroy.yml
+# =============================================================================
+
+- name: "Destruction : Supprimer les déploiements Helm"
+  hosts: k3s_server
+  become: true
+  tasks:
+    - name: Supprimer le release Odoo
+      kubernetes.core.helm:
+        name: odoo
+        release_namespace: odoo
+        state: absent
+        kubeconfig: /etc/rancher/k3s/k3s.yaml
+        wait: true
+      ignore_errors: true
+
+    - name: Supprimer nfs-provisioner
+      kubernetes.core.helm:
+        name: nfs-provisioner
+        release_namespace: storage
+        state: absent
+        kubeconfig: /etc/rancher/k3s/k3s.yaml
+        wait: true
+      ignore_errors: true
+
+    - name: Supprimer les namespaces
+      kubernetes.core.k8s:
+        name: "{{ item }}"
+        api_version: v1
+        kind: Namespace
+        state: absent
+        kubeconfig: /etc/rancher/k3s/k3s.yaml
+      loop:
+        - odoo
+        - storage
+      ignore_errors: true
+
+- name: "Destruction : Désinstaller K3s des workers"
+  hosts: k3s_agents
+  become: true
+  tasks:
+    - name: Désinstaller K3s agent
+      ansible.builtin.shell: /usr/local/bin/k3s-agent-uninstall.sh
+      args:
+        removes: /usr/local/bin/k3s-agent-uninstall.sh
+      ignore_errors: true
+
+- name: "Destruction : Désinstaller K3s du control-plane"
+  hosts: k3s_server
+  become: true
+  tasks:
+    - name: Désinstaller K3s server
+      ansible.builtin.shell: /usr/local/bin/k3s-uninstall.sh
+      args:
+        removes: /usr/local/bin/k3s-uninstall.sh
+      ignore_errors: true
+
+- name: "Destruction : Nettoyer le serveur NFS"
+  hosts: nfs
+  become: true
+  tasks:
+    - name: Supprimer les données NFS
+      ansible.builtin.file:
+        path: "{{ nfs_export_path | default('/srv/nfs/k8s') }}"
+        state: absent
+
+    - name: Recréer le répertoire NFS vide
+      ansible.builtin.file:
+        path: "{{ nfs_export_path | default('/srv/nfs/k8s') }}"
+        state: directory
+        mode: '0777'
+        owner: nobody
+        group: nogroup
+
+  post_tasks:
+    - name: Résumé
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "  Cluster nettoyé avec succès."
+          - "  Pour supprimer les VMs :"
+          - "  cd terraform && terraform destroy"
+          - "=========================================="
+      run_once: true

@@ -1,0 +1,42 @@
+---
+# =============================================================================
+# Inventaire Ansible - MSPR COGIP
+# =============================================================================
+# Copiez ce fichier en hosts.yml et adaptez les IPs
+# Les IPs doivent correspondre à celles définies dans terraform.tfvars
+# =============================================================================
+
+all:
+  vars:
+    ansible_user: ubuntu
+    ansible_ssh_private_key_file: ~/.ssh/id_rsa
+    ansible_python_interpreter: /usr/bin/python3
+    k3s_version: "v1.29.2+k3s1"
+    odoo_domain: "odoo.local"
+
+  children:
+    k3s_server:
+      hosts:
+        k3s-control-plane:
+          ansible_host: 10.0.0.10
+          k3s_role: server
+
+    k3s_agents:
+      hosts:
+        k3s-worker-1:
+          ansible_host: 10.0.0.11
+          k3s_role: agent
+        k3s-worker-2:
+          ansible_host: 10.0.0.12
+          k3s_role: agent
+
+    nfs:
+      hosts:
+        nfs-server:
+          ansible_host: 10.0.0.13
+          nfs_export_path: /srv/nfs/k8s
+
+    k3s_cluster:
+      children:
+        k3s_server:
+        k3s_agents:

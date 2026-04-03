@@ -1,0 +1,51 @@
+#cloud-config
+autoinstall:
+  version: 1
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+    variant: ""
+  source:
+    id: ubuntu-server
+    search_drivers: false
+  network:
+    version: 2
+    ethernets:
+      primary:
+        match:
+          name: "en*"
+        addresses:
+          - 10.10.10.99/24
+        routes:
+          - to: default
+            via: 10.10.10.1
+        nameservers:
+          addresses:
+            - 8.8.8.8
+            - 8.8.4.4
+  apt:
+    geoip: false
+    preserve_sources_list: false
+    mirror-selection:
+      primary:
+        - uri: "http://archive.ubuntu.com/ubuntu"
+          arches: [amd64]
+  drivers:
+    install: false
+  identity:
+    hostname: ubuntu-k3s
+    username: ubuntu
+    password: __UBUNTU_HASH__
+  ssh:
+    install-server: true
+    allow-pw: true
+  storage:
+    layout:
+      name: lvm
+  late-commands:
+    # Pas de chpasswd en clair : PAM (pam_pwquality) échoue souvent sur "ubuntu" dans in-target.
+    # Le mot de passe vient de identity.password + hash __UBUNTU_HASH__ injecté avant packer build.
+    # Forcer login mot de passe pour Packer. OpenSSH : la première valeur lue gagne pour chaque directive ;
+    # 50-cloud-init.conf est trié avant 50-packer-*, donc un fichier 01-... est lu en premier.
+    - curtin in-target -- sh -c 'printf "%s\n" "PasswordAuthentication yes" "PubkeyAuthentication yes" "KbdInteractiveAuthentication yes" > /etc/ssh/sshd_config.d/01-packer-password.conf && chmod 644 /etc/ssh/sshd_config.d/01-packer-password.conf'
+    - curtin in-target -- sh -c 'printf "%s\n" "ubuntu ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-ubuntu-nopasswd && chmod 440 /etc/sudoers.d/90-ubuntu-nopasswd'

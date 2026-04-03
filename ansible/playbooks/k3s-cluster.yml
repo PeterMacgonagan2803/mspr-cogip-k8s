@@ -1,0 +1,45 @@
+---
+# =============================================================================
+# Playbook K3s - Déploiement du cluster Kubernetes
+# =============================================================================
+# Déploie K3s en mode HA-capable :
+#   - 1 control-plane (server)
+#   - 2 workers (agents)
+#
+# Usage: ansible-playbook playbooks/k3s-cluster.yml
+# =============================================================================
+
+- name: "K3s : Installation du control-plane"
+  hosts: k3s_server
+  become: true
+  roles:
+    - k3s-server
+
+- name: "K3s : Joindre les workers au cluster"
+  hosts: k3s_agents
+  become: true
+  serial: 1
+  roles:
+    - k3s-agent
+
+- name: "K3s : Vérification du cluster"
+  hosts: k3s_server
+  become: true
+  tasks:
+    - name: Afficher les noeuds du cluster
+      ansible.builtin.shell: kubectl get nodes -o wide
+      register: cluster_nodes
+      changed_when: false
+
+    - name: État du cluster
+      ansible.builtin.debug:
+        msg: "{{ cluster_nodes.stdout_lines }}"
+
+    - name: Vérifier les pods système
+      ansible.builtin.shell: kubectl get pods -A
+      register: system_pods
+      changed_when: false
+
+    - name: Pods système
+      ansible.builtin.debug:
+        msg: "{{ system_pods.stdout_lines }}"

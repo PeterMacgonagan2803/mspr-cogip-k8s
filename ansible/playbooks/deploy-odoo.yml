@@ -1,0 +1,33 @@
+---
+# =============================================================================
+# Playbook Odoo - ERP sur cluster K3s (Helm Bitnami + Ingress Traefik)
+# =============================================================================
+#   - nfs-subdir-external-provisioner (StorageClass NFS)
+#   - chart bitnami/odoo (PostgreSQL integre, Ingress TLS autosigne)
+#
+# Usage: ansible-playbook playbooks/deploy-odoo.yml
+# =============================================================================
+
+- name: "Odoo : Déploiement de l'applicatif et de ses dépendances"
+  hosts: k3s_server
+  become: true
+  roles:
+    - deploy-odoo
+
+  post_tasks:
+    - name: Résumé du déploiement
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "  Déploiement MSPR COGIP terminé !"
+          - "=========================================="
+          - ""
+          - "  Odoo (HTTPS, certificat autosigne) :"
+          - "  https://{{ odoo_domain | default('odoo.local') }}"
+          - ""
+          - "  Compte admin Odoo : email = {{ odoo_email | default('admin@cogip.local') }},"
+          - "  mot de passe = valeur de odoo_bitnami_admin_password (vars / vault)."
+          - ""
+          - "  Ajouter dans /etc/hosts (ou DNS) :"
+          - "  <IP_publique_ou_control-plane> {{ odoo_domain | default('odoo.local') }}"
+          - "=========================================="

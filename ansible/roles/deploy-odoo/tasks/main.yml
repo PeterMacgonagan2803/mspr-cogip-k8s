@@ -1,0 +1,79 @@
+---
+# Deploiement Odoo (MSPR) : NFS provisioner + chart Helm Bitnami Odoo
+# Conforme au sujet : kubernetes.core.helm, Ingress HTTPS (certificats autosignes)
+
+- name: Definir le chemin kubeconfig K3s
+  ansible.builtin.set_fact:
+    kubeconfig_path: /etc/rancher/k3s/k3s.yaml
+
+- name: Ajouter le depot Helm nfs-subdir-external-provisioner
+  kubernetes.core.helm_repository:
+    name: nfs-subdir-external-provisioner
+    repo_url: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+    kubeconfig: "{{ kubeconfig_path }}"
+
+- name: Ajouter le depot Helm Bitnami
+  kubernetes.core.helm_repository:
+    name: bitnami
+    repo_url: https://charts.bitnami.com/bitnami
+    kubeconfig: "{{ kubeconfig_path }}"
+
+- name: Mettre a jour les index Helm (local sur le control-plane)
+  ansible.builtin.command: helm repo update
+  changed_when: false
+
+- name: Creer le namespace storage
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig_path }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: storage
+
+- name: Deployer nfs-subdir-external-provisioner via Helm
+  kubernetes.core.helm:
+    name: nfs-provisioner
+    chart_ref: nfs-subdir-external-provisioner/nfs-subdir-external-provisioner
+    release_namespace: storage
+    create_namespace: true
+    kubeconfig: "{{ kubeconfig_path }}"
+    values: "{{ lookup('template', 'nfs-values.yml.j2') | from_yaml }}"
+    wait: true
+    timeout: 5m0s
+
+- name: Creer le namespace odoo
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig_path }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: odoo
+
+- name: Deployer Odoo (Bitnami) via Helm
+  kubernetes.core.helm:
+    name: odoo
+    chart_ref: bitnami/odoo
+    release_namespace: odoo
+    create_namespace: false
+    kubeconfig: "{{ kubeconfig_path }}"
+    values: "{{ lookup('template', 'odoo-bitnami-values.yml.j2') | from_yaml }}"
+    wait: true
+    timeout: 20m0s
+
+- name: Verifier le deploiement
+  ansible.builtin.shell: |
+    kubectl get pods -n odoo -o wide
+    echo "---"
+    kubectl get svc -n odoo
+    echo "---"
+    kubectl get ingress -n odoo
+  register: odoo_status
+  changed_when: false
+
+- name: Afficher l'etat du deploiement Odoo
+  ansible.builtin.debug:
+    msg: "{{ odoo_status.stdout_lines }}"

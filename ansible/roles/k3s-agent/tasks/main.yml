@@ -1,0 +1,38 @@
+---
+- name: Récupérer le token depuis le control-plane
+  ansible.builtin.set_fact:
+    k3s_token: "{{ hostvars[groups['k3s_server'][0]].k3s_token }}"
+    k3s_server_url: "{{ hostvars[groups['k3s_server'][0]].k3s_server_url }}"
+
+- name: Vérifier si K3s agent est déjà installé
+  ansible.builtin.stat:
+    path: /usr/local/bin/k3s
+  register: k3s_agent_binary
+
+- name: Installer K3s en mode agent (worker)
+  ansible.builtin.shell: |
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="{{ k3s_version }}" sh -s - agent \
+      --server {{ k3s_server_url }} \
+      --token {{ k3s_token }} \
+      --node-name {{ inventory_hostname }}
+  args:
+    creates: /usr/local/bin/k3s
+  environment:
+    K3S_URL: "{{ k3s_server_url }}"
+    K3S_TOKEN: "{{ k3s_token }}"
+
+- name: Attendre que le service k3s-agent soit actif
+  ansible.builtin.systemd:
+    name: k3s-agent
+    state: started
+    enabled: yes
+
+- name: Vérifier que le worker a rejoint le cluster
+  ansible.builtin.shell: |
+    kubectl get nodes {{ inventory_hostname }}
+  delegate_to: "{{ groups['k3s_server'][0] }}"
+  register: worker_status
+  until: worker_status.rc == 0
+  retries: 30
+  delay: 10
+  changed_when: false

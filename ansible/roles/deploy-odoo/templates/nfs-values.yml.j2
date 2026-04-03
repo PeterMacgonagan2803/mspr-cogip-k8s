@@ -1,0 +1,8 @@
+nfs:
+  server: "{{ hostvars[groups['nfs'][0]].ansible_host }}"
+  path: "{{ hostvars[groups['nfs'][0]].nfs_export_path | default('/srv/nfs/k8s') }}"
+storageClass:
+  name: nfs-client
+  defaultClass: true
+  reclaimPolicy: Retain
+  archiveOnDelete: true
