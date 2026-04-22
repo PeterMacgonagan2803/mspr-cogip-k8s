@@ -50,7 +50,7 @@ La solution proposee : un cluster **Kubernetes K3s** deploye via **Terraform + A
 
 Le projet a ete decoupe en **15 taches** reparties sur les 19 heures de preparation. Un diagramme de Gantt (format Mermaid) detaille le planning previsionnel et les dependances entre taches.
 
-**Automatisation bout en bout** : le depot inclut le script `**setup/deploy-all.py`**, qui orchestre le deploiement complet (phases template / infrastructure / Ansible / verification) et envoie des **notifications webhook** en cas de succes ou d'echec, ce qui documente la chaine operationnelle et permet une supervision sans rester colle au terminal.
+**Automatisation bout en bout** : le depot inclut le script **`setup/deploy-all.py`**, qui orchestre le deploiement complet (phases template / infrastructure / Ansible / verification) et envoie des **notifications webhook** en cas de succes ou d'echec, ce qui documente la chaine operationnelle et permet une supervision sans rester colle au terminal.
 
 ## 4. Suivi de l'avancement
 
@@ -132,15 +132,15 @@ Les captures ci-dessous illustrent les preuves de deploiement ; les fichiers ima
 
 ### 11.4 Interface Odoo accessible
 
-**Description** : Capture du navigateur sur `**https://odoo.local`** (certificat autosigne accepte) montrant l'ecran de connexion ou le tableau de bord Odoo.
+**Description** : Capture du navigateur sur **`https://odoo.local`** (certificat autosigne accepte) montrant l'ecran de connexion ou le tableau de bord Odoo.
 
 ### 11.5 Terraform apply
 
-**Description** : Extrait de la sortie `**terraform apply`** montrant la creation ou la mise a jour des **quatre ressources VM** Proxmox, sans erreur, avec resume des adresses IP et disques provisionnes.
+**Description** : Extrait de la sortie **`terraform apply`** montrant la creation ou la mise a jour des **quatre ressources VM** Proxmox, sans erreur, avec resume des adresses IP et disques provisionnes.
 
 ### 11.6 Ansible playbook
 
-**Description** : Extrait de la sortie du playbook principal (`**site.yml`** ou enchainement des playbooks K3s puis Odoo) montrant les taches **changed / ok** jusqu'au resume **PLAY RECAP** sans echec, validant l'idempotence ou le premier deploiement reussi.
+**Description** : Extrait de la sortie du playbook principal (**`site.yml`** ou enchainement des playbooks K3s puis Odoo) montrant les taches **changed / ok** jusqu'au resume **PLAY RECAP** sans echec, validant l'idempotence ou le premier deploiement reussi.
 
 ## 12. Difficultes rencontrees et solutions
 

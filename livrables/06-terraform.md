@@ -52,7 +52,7 @@ Terraform utilise une boucle `for_each` sur une map `locals` pour deployer les 4
 | `k3s-server` | 200 | 2 coeurs | 4 Go | 30 Go | Control-plane K3s |
 | `k3s-worker-1` | 201 | 2 coeurs | 4 Go | 30 Go | Worker K3s |
 | `k3s-worker-2` | 202 | 2 coeurs | 4 Go | 30 Go | Worker K3s |
-| `nfs-server` | 203 | 1 coeur | 1 Go | 50 Go | Serveur NFS |
+| `nfs-server` | 203 | 2 coeurs | 2 Go | 50 Go | Serveur NFS |
 
 ### Configuration reseau
 
@@ -98,7 +98,7 @@ nfs_server_ip    = "10.10.10.13"
 | `proxmox_user` | Utilisateur Proxmox | `root@pam` |
 | `proxmox_password` | Mot de passe Proxmox | (requis, sensible) |
 | `proxmox_node` | Noeud Proxmox cible | (requis) |
-| `template_name` | Nom du template | `ubuntu-k3s-template` |
+| `template_vm_id` | VMID Proxmox du template a cloner | `9000` |
 | `storage_pool` | Pool de stockage | `local-lvm` |
 | `ip_control_plane` | IP du control-plane (CIDR) | (requis) |
 | `ip_worker_1` | IP du worker 1 (CIDR) | (requis) |
