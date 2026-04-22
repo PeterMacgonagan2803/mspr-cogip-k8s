@@ -1,3 +1,7 @@
+# Schedule NFS provisioner on worker-1 (worker-2: AppArmor/containerd PROC profile errors after dpkg).
+nodeSelector:
+  kubernetes.io/hostname: k3s-worker-1
+
 nfs:
   server: "{{ hostvars[groups['nfs'][0]].ansible_host }}"
   path: "{{ hostvars[groups['nfs'][0]].nfs_export_path | default('/srv/nfs/k8s') }}"

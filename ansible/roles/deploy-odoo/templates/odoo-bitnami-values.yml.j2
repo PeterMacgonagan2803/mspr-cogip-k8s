@@ -3,6 +3,15 @@
 
 global:
   defaultStorageClass: "{{ nfs_storage_class | default('nfs-client') }}"
+  security:
+    # Images bitnamilegacy (Docker Hub) : le chart refuse les depots non « bitnami/ » sans ce flag.
+    allowInsecureImages: true
+
+# bitnami/odoo sur Docker Hub est vide ; les tags du chart restent sur bitnamilegacy.
+image:
+  registry: docker.io
+  repository: bitnamilegacy/odoo
+  tag: 18.0.20250805-debian-12-r8
 
 odooEmail: "{{ odoo_email | default('admin@cogip.local') }}"
 odooPassword: "{{ odoo_bitnami_admin_password }}"
@@ -11,6 +20,10 @@ postgresql:
   enabled: true
   auth:
     password: "{{ odoo_bitnami_pg_password }}"
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/postgresql
+    tag: 17.5.0-debian-12-r20
   primary:
     persistence:
       enabled: true
@@ -24,6 +37,10 @@ persistence:
 
 replicaCount: 1
 
+# LoadBalancer reste <pending> sur K3s sans CCM ; l'Ingress Traefik suffit.
+service:
+  type: ClusterIP
+
 ingress:
   enabled: true
   ingressClassName: traefik
@@ -33,7 +50,8 @@ ingress:
   tls: true
   selfSigned: true
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    # web (80) + websecure (443) : sans « web », http://odoo.local ne matche aucune route Traefik.
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
 
 networkPolicy:
   enabled: false

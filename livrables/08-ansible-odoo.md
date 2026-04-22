@@ -23,7 +23,11 @@ Identique au scénario « bare metal » du sujet : `StorageClass` `nfs-client` p
 - Release : `odoo`, namespace `odoo`
 - **PostgreSQL** est fourni par le chart (sous-chart Bitnami).
 - **Persistance** : `global.defaultStorageClass` / `persistence.storageClass` = `nfs-client`.
-- **Ingress** : `ingressClassName: traefik`, `tls: true`, `selfSigned: true`, annotation Traefik `websecure`.
+- **Ingress** : `ingressClassName: traefik`, `tls: true`, `selfSigned: true`, annotations Traefik **`web` et `websecure`** (HTTP **et** HTTPS vers la même règle ; le guide peut citer `http://odoo.local` ou `https://odoo.local`).
+- **Service** : `ClusterIP` (sur K3s sans cloud-controller, un `LoadBalancer` reste indéfiniment `<pending>` et bloque `helm --wait` ; l’accès utilisateur passe par **Traefik / Ingress**).
+- **Images conteneurs** : depuis la migration des images Bitnami sur Docker Hub, les tags référencés par le chart peuvent être **absents** de `docker.io/bitnami/*`. Le dépôt **Docker Hub `bitnamilegacy`** conserve les mêmes tags ; le rôle fixe `image.repository` / `postgresql.image.repository` et `global.security.allowInsecureImages: true` (exigence du chart lorsque le dépôt n’est pas strictement `bitnami/`).
+- **NFS provisioner** : un `nodeSelector` peut placer le pod provisioner sur un nœud donné (ex. éviter un worker avec AppArmor / paquets système dégradés).
+- **Timeouts Helm** : délais portés à **20 minutes** pour le premier pull d’images sur un cluster TP.
 
 Les mots de passe applicatifs sont pilotés par `group_vars` (`odoo_bitnami_admin_password`, `odoo_bitnami_pg_password`), avec possibilité de surcharge via **Ansible Vault** (`vault.yml`).
 

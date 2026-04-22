@@ -171,7 +171,7 @@ proxmox_password = "<MOT_DE_PASSE_ROOT>"
 proxmox_node     = "ns3139245"
 
 # --- Template et stockage ---
-template_name  = "ubuntu-k3s-template"
+template_vm_id = 9000
 storage_pool   = "local"
 network_bridge = "vmbr1"
 

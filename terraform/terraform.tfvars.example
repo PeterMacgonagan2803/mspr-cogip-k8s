@@ -12,7 +12,8 @@ proxmox_password = "VOTRE_MOT_DE_PASSE"
 proxmox_node     = "pve"
 
 # --- Template & Stockage ---
-template_name  = "ubuntu-k3s-template"
+# VMID du template Proxmox (souvent 9000 apres Packer ; doit correspondre a packer/variables.pkr.hcl vm_id)
+template_vm_id = 9000
 storage_pool   = "local"
 network_bridge = "vmbr1"
 

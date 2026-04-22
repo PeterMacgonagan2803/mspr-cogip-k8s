@@ -41,7 +41,8 @@
     kubeconfig: "{{ kubeconfig_path }}"
     values: "{{ lookup('template', 'nfs-values.yml.j2') | from_yaml }}"
     wait: true
-    timeout: 5m0s
+    # Clusters lents / premier pull image : 5m suffisait rarement en TP.
+    timeout: 20m0s
 
 - name: Creer le namespace odoo
   kubernetes.core.k8s:

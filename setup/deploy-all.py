@@ -277,7 +277,7 @@ def remove_local_tf_artifacts(tf_dir):
         "terraform.tfstate",
         "terraform.tfstate.backup",
         ".terraform.tfstate.lock.info",
-        ".terraform.lock.hcl",
+        # Ne jamais supprimer .terraform.lock.hcl : le retry apply sans init provoquerait une erreur.
     ]
     kill_local_terraform()
     time.sleep(2)
@@ -485,6 +485,10 @@ else:
         """, label="Cleanup VMs")
         remove_local_tf_artifacts(tf_dir)
         time.sleep(10)
+        rc = terraform("init -upgrade -input=false", tf_dir)
+        if rc != 0:
+            webhook("*ECHEC* Terraform init (retry)")
+            sys.exit(1)
         rc = terraform("apply -auto-approve -parallelism=1 -input=false", tf_dir)
         if rc != 0:
             webhook("*ECHEC* Terraform apply x2")
@@ -783,7 +787,7 @@ t = time.time()
 if FROM_STEP <= 5:
     webhook("*[5/7]* Ansible playbook (K3s + NFS + Odoo)...")
 
-    max_wait = 1800
+    max_wait = 7200
     poll = 30
     ansible_ok = False
     for attempt in (1, 2):

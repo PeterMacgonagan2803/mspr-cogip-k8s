@@ -5,6 +5,8 @@ resource "proxmox_virtual_environment_vm" "this" {
   description = var.description
   on_boot     = true
   started     = true
+  # Évite les destroy bloqués sur qmshutdown si l’agent ACPI ne répond pas.
+  stop_on_destroy = true
 
   clone {
     vm_id = var.template_vm_id
@@ -23,6 +25,11 @@ resource "proxmox_virtual_environment_vm" "this" {
 
   agent {
     enabled = true
+    # Clones lents / agent tardif : évite des erreurs « waiting for network interfaces » trop tôt.
+    timeout = "30m"
+    wait_for_ip {
+      ipv4 = true
+    }
   }
 
   operating_system {

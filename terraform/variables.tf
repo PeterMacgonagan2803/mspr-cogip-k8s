@@ -20,10 +20,10 @@ variable "proxmox_node" {
   description = "Nom du noeud Proxmox cible"
 }
 
-variable "template_name" {
-  type        = string
-  default     = "ubuntu-k3s-template"
-  description = "Nom du template VM créé par Packer"
+variable "template_vm_id" {
+  type        = number
+  default     = 9000
+  description = "VMID Proxmox du template a cloner (ex. 9000 apres Packer)"
 }
 
 variable "storage_pool" {

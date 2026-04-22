@@ -45,7 +45,7 @@ La solution proposee a la COGIP repose sur une architecture bare-metal virtualis
 |           |  +-------------------------+  |                   |
 |           |  | kube-system             |  |                   |
 |           |  |  +- CoreDNS             |  |                   |
-|           |  |  +- Traefik (Ingress) <-+- HTTPS websecure (PoC) |
+|           |  |  +- Traefik (Ingress) <-+- HTTP web + HTTPS websecure (PoC) |
 |           |  |  +- ServiceLB           |  |                   |
 |           |  |  +- Metrics Server      |  |                   |
 |           |  +-------------------------+  |                   |
@@ -70,7 +70,7 @@ Les disques des trois noeuds K3s (control-plane et workers) sont dimensionnes a 
 ```
 Utilisateur --> DNS local (odoo.local -> IP publique)
             --> iptables NAT Proxmox (souvent 443 -> Traefik)
-            --> Traefik (entrypoint websecure, TLS secret Helm)
+            --> Traefik (entrypoints **web** + **websecure**, TLS secret Helm)
             --> Service Odoo (chart Bitnami)
             --> Pods Odoo / PostgreSQL
             --> PVC -> NFS PV -> VM NFS (/srv/nfs/k8s)

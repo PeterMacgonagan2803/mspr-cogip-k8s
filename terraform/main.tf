@@ -4,6 +4,7 @@
 module "k3s_server" {
   source = "./modules/mspr_vm"
 
+  template_vm_id = var.template_vm_id
   vm_name        = "k3s-server"
   vm_id          = 200
   cores          = 2
@@ -24,6 +25,7 @@ module "k3s_worker_1" {
   source     = "./modules/mspr_vm"
   depends_on = [module.k3s_server]
 
+  template_vm_id = var.template_vm_id
   vm_name        = "k3s-worker-1"
   vm_id          = 201
   cores          = 2
@@ -44,6 +46,7 @@ module "k3s_worker_2" {
   source     = "./modules/mspr_vm"
   depends_on = [module.k3s_worker_1]
 
+  template_vm_id = var.template_vm_id
   vm_name        = "k3s-worker-2"
   vm_id          = 202
   cores          = 2
@@ -64,6 +67,7 @@ module "nfs_server" {
   source     = "./modules/mspr_vm"
   depends_on = [module.k3s_worker_2]
 
+  template_vm_id = var.template_vm_id
   vm_name        = "nfs-server"
   vm_id          = 203
   cores          = 2
