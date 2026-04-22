@@ -172,7 +172,7 @@ Le script **deploy-all.py** (`setup/deploy-all.py`) et les webhooks associes mat
 
 Les codes sources complets sont disponibles dans le depot Git :
 
-- **Depot Git** : URL du depôt équipe (GitHub / GitLab / Gitea — à indiquer lors du rendu)
+- **Depot Git** : `https://github.com/PeterMacgonagan2803/mspr-cogip-k8s` (branche `main`)
 - `setup/` : Scripts de deploiement (template VM, configuration reseau, outils, **deploy-all.py** avec notifications webhook)
 - `terraform/` : Recettes Terraform (provider `bpg/proxmox`, VMs, inventaire ; disques **30 Go** K3s, **50 Go** NFS)
 - `ansible/` : Playbooks et roles Ansible
