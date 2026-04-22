@@ -8,7 +8,9 @@ os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 
-def ssh_exec(host: str, user: str, password: str, command: str, timeout: int = 900):
+def ssh_exec(host: str, user: str, password: str, command: str, timeout: int | None = None):
+    if timeout is None:
+        timeout = int(os.environ.get("MSPR_SSH_TIMEOUT", "900"))
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(host, username=user, password=password, timeout=10)
