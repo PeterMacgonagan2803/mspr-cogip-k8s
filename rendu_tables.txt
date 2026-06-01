@@ -1,0 +1,95 @@
+--- TABLE 0 ---
+Client | COGIP — Déploiement pour Tesker
+Équipe | NABE Aboubacar, Koné Ibrahim, Diallo Moussa, Traoré Fatoumata
+Promotion | EISI — I2 — 2025/2026
+Date | Avril 2026
+Version | v1.0 — Livrable final
+--- TABLE 1 ---
+Composant | Technologie retenue | Justification principale
+Distribution Kubernetes | K3s (SUSE) | LoadBalancer + Ingress Traefik intégrés, faible empreinte mémoire, installation via un seul binaire
+Hébergement | Proxmox VE (baremetal) | Lab campus disponible, provider Terraform existant, sans surcoût cloud
+Préparation des images | Image Cloud Ubuntu + create-template.sh | Script qcow2 cloud-init → template Proxmox en ~3 min ; fichiers Packer conservés comme approche alternative documentée
+Provisionnement IaC | Terraform (bpg/proxmox) | Déploiement déclaratif des 4 VMs, gestion du cycle de vie, génération de l'inventaire Ansible
+Configuration | Ansible + kubernetes.core | Idempotence, lisibilité, modules Helm natifs pour le déploiement applicatif
+Stockage persistant | NFS + nfs-subdir-provisioner | Solution légère, compatible baremetal, sans surcoût CPU/RAM supplémentaire
+Déploiement applicatif | Helm — chart Bitnami Odoo | Chart officielle maintenue, intégration Ansible via kubernetes.core.helm
+Ingress / TLS | Traefik (natif K3s) + TLS autosigné | Traefik intégré à K3s · TLS autosigné via ingress.selfSigned du chart Bitnami · sans cert-manager (PoC)
+Versioning | Git / GitHub | Standard industrie, secrets exclus via .gitignore
+--- TABLE 2 ---
+VM | vCPU | RAM | Disque | Rôle
+k3s-server — 10.10.10.10  (VMID 200) | 2 | 4 Go | 30 Go | Control-plane K3s
+k3s-worker-1 — 10.10.10.11  (VMID 201) | 2 | 4 Go | 30 Go | Worker K3s
+k3s-worker-2 — 10.10.10.12  (VMID 202) | 2 | 4 Go | 30 Go | Worker K3s
+nfs-server — 10.10.10.13  (VMID 203) | 2 | 2 Go | 50 Go | Serveur NFS (stockage)
+--- TABLE 3 ---
+Tâche |  J1 |  J2 |  J3 |  J4 |  J5 |  J6 | Resp.
+Analyse du besoin & choix techno | ▣ | ▣ |   |   |   |   | Tous
+Image Packer Ubuntu 22.04 | ▣ | ▣ |   |   |   |   | D.M.
+Recettes Terraform (VMs Proxmox) |   | ▣ | ▣ |   |   |   | D.M.
+Ansible K3s — control-plane |   |   | ▣ | ▣ |   |   | D.M.
+Ansible K3s — workers |   |   |   | ▣ |   |   | D.M.
+Serveur NFS + StorageClass K8s |   |   |   | ▣ |   |   | K.I.
+Ansible Odoo (Helm + Bitnami) |   |   |   |   | ▣ | ▣ | T.F.
+Ingress Traefik + cert-manager |   |   |   |   | ▣ | ▣ | T.F.
+Tests & validation end-to-end |   |   |   |   |   | ▣ | Tous
+Rédaction du dossier de rendu | ▣ | ▣ | ▣ | ▣ | ▣ | ▣ | T.F./N.A.
+Préparation soutenance |   |   |   |   |   | ▣ | Tous
+--- TABLE 4 ---
+À faire | En cours | Revue Technique | Terminé ✓
+— | — | — | ✓ Analyse du besoin ✓ Choix techno ✓ Image Packer Ubuntu ✓ Terraform VMs Proxmox ✓ Ansible K3s CP ✓ Ansible K3s workers ✓ Serveur NFS ✓ StorageClass K8s ✓ Déploiement Odoo Helm ✓ Ingress Traefik TLS ✓ Tests end-to-end ✓ Dossier de rendu
+--- TABLE 5 ---
+Paramètre | Valeur
+VM ID | 9000 (template Proxmox)
+OS | Ubuntu 22.04 LTS Jammy (image cloud officielle qcow2)
+CPU | 2 cœurs, type host
+RAM | 2048 Mo
+Réseau | virtio, bridge vmbr1
+Cloud-init | Activé (lecteur IDE2) — utilisateur ubuntu, IP DHCP par défaut
+Durée de création | ~3 minutes (vs ~15–20 min avec Packer + ISO)
+--- TABLE 6 ---
+→ Code source complet disponible en Annexe A — Fichiers Packer alternatifs (ubuntu-k3s.pkr.hcl, user-data)
+--- TABLE 7 ---
+→ Code source complet disponible en Annexe B — Code source Terraform complet (providers.tf, variables.tf, main.tf, outputs.tf, inventory.tpl)
+--- TABLE 8 ---
+→ Code source complet disponible en Annexe C — Playbooks Ansible K3s complets (01-nfs.yml, 02-k3s-install.yml)
+--- TABLE 9 ---
+→ Code source complet disponible en Annexe D — Playbook Ansible Odoo complet (03-odoo.yml)
+--- TABLE 10 ---
+[ Internet / Réseau client Tesker ] ↓  HTTPS (443) / HTTP (80) [ Serveur OVH dédié — Proxmox VE — IP publique x.x.x.x ] iptables DNAT : :80 → 10.10.10.10:80  |  :443 → 10.10.10.10:443 ↓ [ Traefik Ingress (natif K3s) — control-plane 10.10.10.10 ] Ingress : odoo.local → odoo:8069  (TLS autosigné chart Bitnami) ↓ ┌──────────────────────────────────────────────────────────────────┐ │  Réseau privé vmbr1 (10.10.10.0/24) — MASQUERADE sortie        │ │  CLUSTER KUBERNETES K3S  (namespace: odoo)                      │ │   Pod: Odoo (Bitnami / bitnamilegacy)  ←→  Pod: PostgreSQL      │ │   PVC: odoo-data (5 Gi)                     PVC: pg-data (5 Gi) │ └──────────────────────────────────────────────────────────────────┘ ↕  NFS StorageClass nfs-client [ Serveur NFS — 10.10.10.13 — /srv/nfs/k8s — 50 Go ] ↑ ┌──────────────────────────────────────────────────────────────────────┐ │  k3s-server (.10 — 30 Go)  k3s-worker-1 (.11 — 30 Go)               │ │  k3s-worker-2 (.12 — 30 Go)  nfs-server (.13 — 50 Go)               │ └──────────────────────────────────────────────────────────────────────┘
+--- TABLE 11 ---
+Composant | Rôle | Technologie
+Hébergement | Serveur OVH dédié — Proxmox VE — NAT iptables | Proxmox VE 8.x
+Template VM | Image cloud Ubuntu 22.04 qcow2 + cloud-init → ID 9000 | create-template.sh (Packer en alternatif)
+Provisionnement | Création déclarative des 4 VMs (VMIDs 200–203) | Terraform + provider bpg/proxmox
+Orchestrateur K8s | Scheduling, self-healing, réseau pods | K3s v1.29.2 (SUSE)
+Ingress / TLS | Routage HTTP+HTTPS via entrypoints web+websecure | Traefik natif K3s + TLS autosigné Bitnami
+Stockage persistant | PersistentVolumes Odoo et PostgreSQL (5 Gi chacun) | NFS VM 50 Go + nfs-subdir-provisioner
+ERP applicatif | Chart Helm Bitnami (dépôt bitnamilegacy) | Odoo (Bitnami Helm)
+Base de données | Sous-chart Bitnami intégré au chart Odoo | PostgreSQL (Bitnami Helm)
+Configuration IaC | Rôles common, k3s-server, k3s-agent, deploy-odoo | Ansible + kubernetes.core + Ansible Vault
+Script d'orchestration | Chaîne complète avec webhooks notifications | setup/deploy-all.py
+--- TABLE 12 ---
+Étape | Outil | Durée estimée
+Recréation du template VM Ubuntu 22.04 | create-template.sh | ~1 min (cloud image qcow2)
+Déploiement des 4 VMs sur Proxmox (30/50 Go) | Terraform apply | ~2 min
+Déploiement cluster K3s (3 nœuds + NFS) | Ansible playbook | ~3 min
+NFS Provisioner + Chart Bitnami Odoo (Helm) | Ansible + kubernetes.core | ~5 min
+Initialisation Odoo + premier accès HTTPS | Script Python / navigateur | ~5 min
+Restauration des données NFS | Backup (rsync / Velero) | Variable
+--- TABLE 13 ---
+Outil | Usage | Justification
+Discord | Communication quotidienne, canaux thématiques (général, tech, docs) | Gratuit, vocal + textuel, accessible sur mobile
+Kanboard | Suivi Kanban, attribution des tâches, deadlines | Open-source, auto-hébergé, interface simple
+GitHub | Versioning Git, pull requests, revue de code | Standard industrie, gratuit pour les équipes
+Notion | Wiki projet, notes de réunion, documentation partagée | Collaboratif en temps réel, structuré
+Google Meet | Réunions à distance, démonstrations, pair-programming | Accessible sans installation
+--- TABLE 14 ---
+Difficulté | Impact | Solution
+Provider Terraform telmate/proxmox : erreurs de permissions VM.Monitor même avec tokens privilégiés | Blocage complet, Terraform ne pouvait pas créer les VMs | Migration vers le provider bpg/proxmox qui gère mieux l'authentification par mot de passe et le SSH natif
+Packer + ISO : l'installeur manuel se lançait au lieu du mode cloud-init autoinstall | Impossible de créer le template automatiquement | Abandon de Packer + ISO au profit d'un script utilisant l'image cloud Ubuntu qcow2 avec cloud-init natif
+Images Docker bitnami/* : tags retirés ou introuvables pour Odoo et PostgreSQL | CrashLoopBackOff, pods impossibles à démarrer | Utilisation des mêmes tags sur bitnamilegacy/* + global.security.allowInsecureImages: true dans les valeurs Helm
+Helm : Service LoadBalancer du chart Odoo en <pending> sans cloud-controller K3s | Odoo non accessible via IP externe | Surcharge service.type: ClusterIP ; accès utilisateur uniquement via Ingress Traefik
+Timeout SSH lors d'Ansible depuis Windows vers les VMs via Proxmox | Playbooks échouent ou se coupent en cours | Exécution d'Ansible directement sur le serveur Proxmox avec scripts Python/Paramiko pour l'orchestration
+Traefik / HTTP : l'Ingress ne routait que websecure (443), odoo.local inaccessible en HTTP | Accès impossible depuis certains navigateurs | Annotation traefik.ingress.kubernetes.io/router.entrypoints: web,websecure sur l'Ingress Odoo
+QEMU Guest Agent : Terraform bloquait indéfiniment en attendant l'agent non installé | terraform apply ne terminait jamais | Désactivation dans la configuration Terraform (agent { enabled = false })
+Réseau Proxmox : VMs sur réseau privé vmbr1 non accessibles depuis l'extérieur | Odoo inaccessible depuis le navigateur client | vmbr1 + MASQUERADE pour la sortie ; DNAT PREROUTING sur vmbr0 (ports 80 et 443 → 10.10.10.10) ; persistance via iptables-persistent

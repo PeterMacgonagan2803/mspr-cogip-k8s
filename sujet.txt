@@ -1,0 +1,296 @@
+ CERTIFICATION PROFESSIONNELLE EXPERT EN INFORMATIQUE ET SYSTEME
+ D’INFORMATION RNCP35584
+Bloc 2 – Manager un projet informatique avec agilité en collaboration avec les
+parties prenantes  
+Cahier des Charges de la MSPR « Gérer un projet d'infrastructures virtualisées selon
+les principes agile dans un environnement multiculturel » 
+Identifier l’ensemble des étapes de réalisation du système d’information pour organiser le projet en
+tâches et livrables en répartissant les activités en fonction des ressources humaines, techniques et
+financières à mobiliser.
+Concevoir les cahiers des charges technique et fonctionnel d’un projet de développement S.I. à l’aide
+des besoins utilisateurs collectés afin de cadrer le développement
+Gérer un projet agile en utilisant les méthodes et outils adaptés à ce mode de fonctionnement pour
+tester, modifier et procéder par itération afin de réduire les délais de remise des projets de
+développement S.I.
+Etablir des tableaux de bord de suivi de performance (qualitative et quantitative) de l’ensemble des
+ressources allouées à chaque étape-projet pour anticiper, visualiser et corriger les écarts en temps réel
+afin de limiter les contraintes de ressources et les retards dans la réalisation du projet.
+Piloter les prestataires extérieurs éventuels gérant les ressources informatiques d’un système
+d’information existant listées dans la cartographie établie afin de sécuriser la mise en œuvre technique.
+Conduire une équipe projet en diffusant les fondamentaux de l’agilité : adaptation, flexibilité et
+amélioration continue au sein de l’équipe afin d’être en mesure d’absorber les changements de priorité
+qui peuvent intervenir dans un contexte de forte contrainte de temps et d’incertitudes.
+Adopter une stratégie d’accueil aux handicaps afin de favoriser l’inclusion des profils en situation de
+handicap au sein de l’équipe et permettre leur pleine intégration, en collaboration avec le référent
+handicap de l’entreprise.
+Communiquer avec l’équipe en adoptant les modes de communication adéquats selon les cultures et
+la langue des collaborateurs afin de garantir l’intégration de tous les membres de l’équipe.
+Proposer des solutions innovantes afin de favoriser les interactions au sein de l’équipe et d’anticiper des
+conflits de travail liés aux malentendus multiculturels.
+Concevoir un processus de communication inclusif régulier au sein de l’équipe afin de synchroniser les
+activités quotidiennes et mettre en place un fil de discussion à l’aide d’outils numériques.
+Animer des réunions à distance afin de maintenir une dynamique de groupe et renforcer l’esprit
+d’équipe des membres en télétravail et/ou à distance.
+Concevoir un processus de partage d’information afin de faciliter l’inclusion et la collaboration entre les
+membres en télétravail et/ou à distance en utilisant des outils numériques.
+Accompagner l’équipe dans l’appropriation du travail à distance ou du télétravail en proposant des
+solutions managériales afin de favoriser la motivation et la résilience et permettre ainsi de préserver
+équilibre entre vie professionnelle/vie privée dans un souci de productivité et de bien-être.COMPÉTENCES ÉVALUÉES : 
+Direction Innovation & Pédagogie 
+ Page 1 sur 6Durée de préparation : 19 heures 
+Mise en œuvre : Travail d’équipe constituée de 4 apprenants (5 maximum si groupe impair)PHASE 1 : PRÉPARATION DE CETTE MISE EN SITUATION PROFESSIONNELLE RECONSTITUÉE 
+Objectif : mettre en avant et démontrer que les compétences visées par ce bloc sont bien acquises.  
+Moyen : L’équipe utilise un support de présentation 
+Durée totale par groupe : 50 mn se décomposant comme suit :  
+20 mn de soutenance orale par l’équipe.  
+30 mn d’entretien collectif avec le jury (questionnement complémentaire).  
+Jury d’évaluation : 2 personnes (binôme d’évaluateurs) par jury – Ces évaluateurs ne sont pas
+intervenus durant la période de formation et ne connaissent pas les apprenants à évaluer.  PHASE 2 : PRÉSENTATION ORALE COLLECTIVE + ENTRETIEN COLLECTIF 
+I - INTRODUCTION
+Bien que le sujet principal de cette MSPR soit la gestion de projet, le sujet vous permet également de
+mettre en œuvre un ensemble de compétences métier plus techniques liées au bloc de spécialité choisi.
+Aussi en complément des compétences listées en première partie du sujet, celui-ci vous permettra de
+mettre en valeur les compétences suivantes : 
+Gérer un projet de mise en place d'une infrastructure virtualisée utilisant Kubernetes
+Planifier la mise en place d'une infrastructure d'orchestration de conteneurs virtualisée en mode
+gestion de projet.
+À chaque étape du projet, la diviser en tâches "atomiques", bien penser à répartir ces tâches,
+estimer leur temps de réalisation via un diagramme de Gantt et/ou un Kanban, et effectuer un
+suivi régulier de l'avancement de chaque tâche
+Choisir les technologies à utiliser pour la mise en place d'un cluster Kubernetes (soit via GKE/AKS/EKS,
+soit "baremetal")
+Recommandation solution baremetal: utilisez une distribution Kubernetes telle que K3S, K0S,
+RKE2, ou microK8S. Concernant le stockage persistant des charges de travail (pods) du cluster,
+vous pouvez utiliser nfs-subdir-external-provisioner et une petite VM NFS, ou des solutions du type
+OpenEBS, LongHorn ou Piraeus Datastore.
+Recommandation solution cloud: Vérifiez si les partenariats de votre campus vous permettent
+d'accéder à des ressources cloud gratuitement ou à moindre coût. 
+Préparer les images nécessaires via Packer.
+Déployer les ressources (VMs, VPC, etc) nécessaires via Terraform (ou OpenTofu)
+Puis créer le cluster Kubernetes via un playbook Ansible. En cas de solution cloud, où la création du
+cluster est automatique, utiliser le plugin Ansible kubernetes.core (disponible sur ansible-galaxy) pour
+déployer les applicatifs requis.
+Enfin, expliquer vos choix en fonction de l'expression du besoin initial, quelles difficultés avez vous
+rencontrées, et quelles solutions avez vous pu y apporter. 
+Les compétences évaluées recouvrent à la fois des compétences techniques, ainsi que des compétences
+organisationnelles : le but de cette MSPR est de simuler un projet informatique dans son intégralité, de
+sa gestion à son implémentation technique.
+II - PRÉSENTATION DE L'ENTREPRISE ET EXPRESSION DU BESOIN
+La société COGIP (COnglomérat Général d'Informatique Professionnelle) est une entreprise de
+développement informatique spécialisée dans les logiciels de gestion d'entreprise (ERP, etc.). Elle  
+propose à ses clients différentes solutions, certaines basées sur l'ERP libre Odoo (pour les PME), d'autres
+basées sur son propre ERP développé en interne, CogiCloud, qui fournit aux clients de grande taille tous
+les services nécessaires à la gestion d'une entreprise : Groupware, ERP, site web, mailing, partage
+collaboratif de fichiers, gestion de documentation, etc.
+Pour le déploiement de l'infrastructure informatique nécessaire à l'hébergement de ses applicatifs, la
+société COGIP fait appel à des prestataires, via des appels d'offres réguliers. En effet, elle préfère se
+concentrer sur le développement de son logiciel phare.
+La société COGIP a récemment décroché un important contrat avec le groupe Tesker, un fabricant de
+véhicules électriques grand public, en plein développement. Dès lors, la COGIP a lancé un appel d'offres
+pour la mise en place d'une infrastructure évolutive, performante, flexible et offrant un bon niveau de
+résilience aux pannes. Votre entreprise, grâce à son équipe technico-commerciale, a remporté cet appel
+d'offres. Il faut maintenant proposer une solution adaptée au besoin de la COGIP, qui lui permettra de
+déployer facilement son applicatif phare afin de le mettre au service de son client. De plus, cette solution
+devra être aisément reproductible : la COGIP a instamment demandé à votre entreprise d'utiliser des
+outils d'infrastructure as Code afin de pouvoir mettre en place un plan de Reprise d'Activité (PRA) après
+incident majeur, satisfaisant le cahier des charges de son client, Tesker.
+Direction Innovation & Pédagogie 
+ Page 2 sur 6
+Pour cela, vos technico-commerciaux ont - intelligemment - proposé l'utilisation du logiciel d'orchestration
+de conteneurs Kubernetes, en raison de sa flexibilité, de sa haute résistance aux pannes, et de sa facilité de
+dimensionnement, les différents logiciels développés par la COGIP étant, de surcroît, déjà conteneurisés.
+De même, vos équipes technico-commerciales ont mis en avant l'expérience de vos équipes sur les outils
+Packer, Terraform et Ansible.
+Dès lors, il vous incombe, à vous et votre équipe, de présenter un premier PoC (Proof of Concept)
+d'infrastructure à vos dirigeants ainsi qu'à la COGIP. La COGIP n'ayant pour le moment pas fourni l'accès à
+son dépôt de conteneurs, votre PoC devra donc démontrer la mise en place de l'ERP Odoo sur un cluster
+Kubernetes.
+Il est important d'utiliser la méthode agile tout au long de votre projet, afin de gérer au mieux le temps de
+chacun et de répartir efficacement les différentes tâches nécessaires à la réalisation technique du projet.
+De même, il est important de versionner avec Git vos recettes Terraform, vos playbooks Ansible, ainsi que
+vos fichiers d'image Packer. Vous pouvez utiliser Github, Gitlab, Gitea (auto-hébergé). Faites attention aux
+secrets commités dans un dépôt public !
+ 
+Vous devrez donc:
+Déterminer les technologies adaptées à la réalisation du projet, en accord avec le besoin de la COGIP ;
+Estimer les temps nécessaires à la réalisation des différentes tâches du projet dans un diagramme de
+Gantt ;
+Gérer votre projet au fur et à mesure de sa réalisation via un  Kanban ;
+Préparer les images Packer, recettes Terraform et playbooks Ansible pour mettre en place un petit
+cluster Kubernetes (un control-plane, deux workers) permettant l'hébergement d'un ERP (Odoo) ;
+Enfin, déployer l'ERP Odoo sur votre cluster Kubernetes et le rendre accessible à l'extérieur de votre
+cluster via un Ingress (HTTPS, certificats autosignés acceptés). Vous pouvez utiliser le plugin Ansible
+ansible-galaxy kubernetes.core.helm pour déployer Odoo via Helm.
+Pour finir, vous devrez préparer un dossier de rendu démontrant la réalisation des tâches précédentes.
+Mission 1 : Choix des technologies et justification des choix.
+Mission 2 : Organisation du projet : tâches nécessaires à sa réalisation et estimation du temps
+nécessaire.
+ Sous-tâche : Réfléchissez à la création d'un environnement de travail inclusif et respectueux.
+Mission 3 : Suivi de l'évolution de la réalisation des tâches définies en mission 2.
+Mission 4 : Packer (si utilisé), préparation des images.
+Mission 5 : Terraform, préparation et déploiement de l'infrastructure.
+Mission 6 : Ansible, déploiement de Kubernetes sur l'infrastructure Terraformée (si solution BareMetal)
+Mission 7 : Ansible, déploiement de l'applicatif Odoo sur le cluster, mise en place de l'Ingress pour y
+accéder.
+Mission 8 :  Rédaction du dossier de rendu finalIII-LISTING DES OBJECTIFS
+VI - CAHIER DES CHARGES DÉTAILLÉ / AIDE
+Mission 1 : choix des technologies et justification des choix
+Il va falloir choisir quelle "distribution" Kubernetes utiliser. Bien qu'il soit tout à fait possible de déployer
+un cluster Kubernetes via kubeadm manuellement, il peut être intéressant, en terme de gain de temps,
+de s'orienter vers une distribution Kubernetes. De même, ces solutions sont en général plus simples à
+maintenir dans la durée.
+Pour cela, nous vous proposons d'utiliser l’une des "distributions" suivantes:
+Suse K3S :  LoadBalancer intégré (svcLB), Ingress intégré (Traefik)
+Suse RKE2 : LoadBalancer via Calico. Ingress à déployer soi-même (ex : ingress-nginx)
+Mirantis K0S : il faudra déployer un LoadBalancer, par exemple MetalLB, et un Ingress, par exemple
+ingress-nginx
+Canonical MicroK8S
+Bien qu'une bonne pratique consiste à déployer au minimum trois control-planes, pour des raisons
+évidentes de redondance et de haute-disponibilité, il n'est pas nécessaire de le faire lors de cette MSPR.
+Votre cluster Kubernetes devra donc être composé à minima d'un control-plane et deux workers. 
+Vous pouvez aussi tout à fait utiliser des clusters managés dans le "cloud", par exemple:
+GKE chez Google cloud
+AKS chez Azure
+EKS chez AWS
+Kapsule chez Scaleway
+Cependant, ne perdez pas de vue que ces services sont payants. Rapprochez-vous du service
+pédagogique de votre campus afin de déterminer si des partenariats avec des fournisseurs de solutions
+cloud sont en cours, ce qui permettrait de déployer vos ressources à moindre coût, voire gratuitement.
+Direction Innovation & Pédagogie 
+ Page 3 sur 6
+Mission 2 : Organisation du projet
+Définissez les différentes tâches nécessaires à la réalisation de votre projet et estimez le temps
+nécessaire à leur réalisation. Reportez ces informations sur un diagramme de Gantt.
+Prenez aussi le temps de réfléchir aux mesures que vous mettriez en place afin d'assurer un
+environnement de travail inclusif, tolérant et respectueux des sensibilités de chacun ⋅ e. Par exemple,
+comment accueilleriez vous au sein du projet une personne en situation de handicap psychomoteur, et
+comment adapteriez-vous sa charge de travail à sa situation ?
+Exemples d'outils open-source de gestion de projet:
+Kanboard
+OpenProject
+Redmine
+Mission 3 : Suivi de l'avancement du projet
+Ici, vous suivrez régulièrement l'avancement des tâches attribuées à chacun ⋅ e. Généralement, un
+tableau de type Kanban permet un suivi efficace et agréable de chaque tâche.
+Une organisation typique des colonnes de votre kanban pourrait être :
+           À faire -> En cours -> Revue Technique -> Terminé
+Il est important que la revue technique soit réalisée collectivement. En effet, cette étape permet de
+découvrir des oublis et des erreurs parfaitement humains, qui seraient passés inaperçus sans sans ce
+temps de relecture partagé.
+Mission 4 : Packer (si utilisé), préparation des images
+Suivant vos choix techniques, vous serez amenés à utiliser, ou pas, Packer, qui vous permettra de
+provisionner, par exemple, un utilisateur, sa clef SSH, de préinstaller des paquets, etc, lors de la création
+de la machine virtuelle par Terraform.
+Vous devrez, le cas échéant, documenter vos scripts Packer et expliquer leur utilité dans le contexte du
+projet et au regard du besoin de l’entreprise COGIP.
+Quelque ressource:
+-  Documentation de Packer
+Mission 5 : Terraform, préparation et déploiement de l'infrastructure
+Vous devrez préparer les recettes Terraform permettant de déployer votre infrastructure sur la solution
+choisie (cloud, laboratoire du campus, hyperviseur personnel, etc). Bien évidemment, pensez à les
+documenter et expliquer leur fonctionnement dans votre dossier de rendu.
+Quelques ressources :
+Documentation
+Providers:
+GCP
+Azure
+AWS
+Proxmox
+VMWare VSphere
+Harvester HCI
+Mission 6 : Ansible, déploiement de Kubernetes sur l'infrastructure provisionnée par Terraform (si
+solution BareMetal)
+De la même façon, vous devrez préparer un playbook Ansible permettant de déployer un cluster
+Kubernetes sur l'infrastructure mise en place durant les missions 4 et 5.
+Ce playbook devra donc créer un control-plane Kubernetes, et  y joindre deux workers afin de
+constituer votre petit cluster final.
+Normalement, pour cette mission, les modules intégrés d'Ansible devraient être suffisants (à minima si
+vous avez choisi d'utiliser k3s ou k0s). Si vous avez choisi d'utiliser une solution cloud de type GKE ou
+AKS, le cluster devrait déjà être opérationnel après l'étape Terraform et, dans ce cas, vous n'avez pas à
+réaliser cette mission. 
+Direction Innovation & Pédagogie 
+ Page 4 sur 6
+Mission 7: Ansible, déploiement de l'applicatif Odoo sur le cluster, mise en place de l'Ingress pour y
+accéder.
+Ici, le but est de déployer l'applicatif de notre PoC (odoo), ainsi qu'une solution d'Ingress (et de
+LoadBalancer si vous n'utilisez pas k3s), via Ansible et les modules Ansible Galaxy kubernetes.core.*, et
+enfin d'exposer via notre Ingress notre applicatif Odoo à l'extérieur du cluster.
+Quelques ressources:
+Installez Helm
+Documentation Ansible kubernetes.core
+Documentation Ansible kubernetes.core.k8s
+Documentation Ansible kubernetes.core.helm
+MetalLB
+Ingress-nginx
+cert-manager
+nfs-subdir-external-provisioner
+Recommandation
+Utilisez le module d'Ansible kubernetes.core.helm pour déployer tous ces outils, puis terminez par le
+déploiement d'Odoo. Grâce au module kubernetes.core.helm et Helm (pensez à l'installer), vous devriez
+gagner un temps non négligeable!
+Concernant Helm, pour le déploiement d'Odoo, vous pourrez ajouter le dépôt Helm bitnami, qui contient
+une charte Helm pour Odoo, ainsi que de nombreuses autres charts. Bitnami est un projet OpenSource
+dépendant de VMWare ;  leurs projets sont en général de bonne qualité pour des Proof of Concepts. 
+Note concernant le stockage
+Si vous êtes partis sur une solution "BareMetal", vous pouvez utiliser une classe de stockage s'appuyant sur
+NFS : nfs-subdir-external-provisioner. Il faudra alors installer et configurer un serveur NFS sur une
+quatrième VM, ainsi qu'un export d'un répertoire qui sera utilisé par nfs-subdir-external-provisioner pour y
+créer les Volumes persistants nécessaires.
+C'est la solution la plus légère et la plus simple pour disposer de stockage distant sous Kubernetes, sans
+devoir installer des classes de stockage telle que Longhorn ou OpenEBS qui,  bien que performantes et
+pratiques une fois en place, peuvent requérir des ressources CPU, réseau et RAM non-négligeables selon
+votre environnement (cluster de virtualisation partagé, laptop, etc.).
+Si vous utilisez un fournisseur de cloud pour déployer votre cluster, vous disposez normalement déjà d'une
+classe de stockage "officielle". Cependant, gardez à l'esprit que le stockage, dans ce cas, est payant ;
+n'utilisez donc que de petits volumes (1Go, 2Go, etc) afin de limiter les coûts.
+La société COGIP attend les livrables suivants : 
+Un dossier de rendu final présentant votre projet dans son ensemble, à savoir :
+Présentation et justification des choix technologiques :
+ choix de la « distribution » Kubernetes ou du service managé (K3s, RKE2, k0s, MicroK8s, GKE,
+AKS, EKS, Kapsule, etc.) ;
+ choix de la solution d’hébergement (cloud, laboratoire du campus, hyperviseur personnel, etc.) ;
+ choix et rôle des outils d’Infrastructure as Code (Packer, Terraform, Ansible).
+Diagramme de Gantt présentant les tâches nécessaires à la réalisation du projet et leur planning
+prévisionnel.
+Tableau Kanban (ou équivalent) illustrant le suivi des tâches.
+Description des mesures mises en place pour assurer un environnement de travail inclusif, tolérant
+et respectueux, incluant des exemples concrets (par exemple, accueil d’une personne en situation
+de handicap visuel).
+Description des images préparées avec Packer (si utilisé)
+Explication des recettes Terraform 
+Description du déploiement de Kubernetes avec Ansible (si solution BareMetal) 
+Présentation du déploiement de l’applicatif Odoo avec Ansible 
+Description de l’architecture globale de la solution
+Captures d’écran et explication des principaux écrans / éléments de preuve : accès à l’interface
+Odoo via l’Ingress , éventuels tableaux de bord de supervision, outils de suivi, etc.V - LIVRABLES ATTENDUSMission 8: dossier de rendu final.
+Votre dossier final devra contenir le résumé de l’ensemble de vos missions, screenshots à l'appui. Vous
+fournirez en annexes les recettes Packer, Terraform et les playbooks Ansible que vous avez utilisé pour
+déployer votre infrastructure.
+De même, il est attendu que vous puissiez présenter l’organisation de votre projet : diagramme de
+Gantt, tableau Kanban, etc.
+Direction Innovation & Pédagogie 
+ Page 5 sur 6
+Vos VMs devront avoir les ressources suivantes:
+Control-plane : 2 coeurs, 2 Go RAM minimum (4 Go recommandés), 20 Go disque.
+Workers : 2 coeurs, 4 Go RAM recommandés, 30 Go disque.
+Réseau : 1Gbps minimum. 2.5Gbps recommandés si vous utilisez une classe de stockage type Longhorn
+ou OpenEBS (réplication).
+Si vous utilisez une solution de cloud managée type GKE, normalement vous n'aurez pas à vous soucier des
+control-planes, mais vos workers devront avoir 2vCPUs et 4 Go de RAM chacun, idéalement (Odoo est un
+peu gourmand).
+Par exemple, avec GKE, vous pouvez prendre des instances SPOT (moins chères), de type e2-medium, qui
+conviendront à cette MSPR. Si vous les placez dans un Datacenter de la zone us-west, vous devriez obtenir
+un tarif mensuel de l'ordre de 50$/40€ environ.CONFIGURATION MATÉRIELLE MINIMALE
+Direction Innovation & Pédagogie 
+ Page 6 sur 6En complément des livrables, l’équipe projet devra préparer un support de présentation destiné à la
+soutenance finale devant la direction de la COFRAP composée de profils techniques et non-technique. 
+Une démonstration de votre cluster fonctionnel, ainsi que de votre applicatif Odoo déployé sur ce cluster,
+est attendue.
+Il est important de souligner que l’évaluation de cette MSPR repose sur la combinaison des trois éléments
+suivants : 
+la qualité du travail réalisé au cours du projet, 
+la pertinence et l’exhaustivité des livrables remis 
+et la capacité de l’équipe à présenter, justifier et valoriser ce travail lors de la soutenance orale. 
+Les équipes devront donc s’assurer que la soutenance reflète bien l’ensemble des compétences
+attendues (cf. page 1), en démontrant à la fois la maîtrise technique et la capacité à communiquer
+efficacement auprès d’un client professionnel. 

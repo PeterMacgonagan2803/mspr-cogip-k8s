@@ -1,0 +1,694 @@
+
+
+
+
+
+
+CERTIFICATION PROFESSIONNELLE
+Expert en Informatique et Système d'Information
+RNCP35584 — Bloc 2
+
+MSPR TPRE961
+Gérer un projet d'infrastructures virtualisées
+selon les principes Agile dans un environnement multiculturel
+
+Dossier de Rendu Final
+Déploiement d'un cluster Kubernetes K3s avec Infrastructure as Code
+
+Table des matières
+
+Résumé exécutif
+Ce dossier constitue le livrable final de la MSPR TPRE961, réalisé dans le cadre de la certification professionnelle Expert en Informatique et Système d'Information (RNCP35584 — Bloc 2). Il documente le projet mené pour le compte de la société COGIP, suite à un appel d'offres remporté pour le déploiement d'une infrastructure Kubernetes au service du groupe Tesker.
+La solution retenue repose sur la distribution K3s de Kubernetes, déployée sur serveur OVH dédié (Proxmox VE), et orchestrée via la chaîne create-template.sh / Terraform / Ansible. L'ERP Odoo est exposé en HTTPS via l'Ingress Traefik natif K3s avec TLS autosigné et stockage persistant NFS. Les images Docker utilisent le dépôt bitnamilegacy (migration Bitnami).
+Les fichiers de configuration complets (Packer alternatif, Terraform, Ansible K3s et Odoo) sont disponibles dans les Annexes A à D et dans le dépôt Git versionné (github.com/PeterMacgonagan2803/mspr-cogip-k8s). Le corps du document présente les choix, la démarche et les résultats.
+
+1. Contexte et présentation du projet
+1.1 La société COGIP et son besoin
+La société COGIP (COnglomérat Général d'Informatique Professionnelle) est un éditeur de logiciels de gestion d'entreprise. Elle propose l'ERP libre Odoo pour les PME et son ERP propriétaire CogiCloud pour les grandes entreprises. COGIP externalise son infrastructure informatique via des appels d'offres pour rester concentrée sur son cœur de métier : le développement logiciel.
+COGIP a récemment décroché un contrat stratégique avec le groupe Tesker, fabricant de véhicules électriques en forte croissance. Ce contrat impose une infrastructure hautement disponible, scalable, et capable de supporter un Plan de Reprise d'Activité (PRA). Notre entreprise a remporté l'appel d'offres correspondant grâce à notre expertise sur la chaîne tooling Kubernetes / Packer / Terraform / Ansible.
+1.2 Périmètre du PoC
+Le livrable est un Proof of Concept démontrant le déploiement de l'ERP Odoo sur un cluster Kubernetes, entièrement piloté par Infrastructure as Code. Les contraintes du cahier des charges sont :
+Cluster Kubernetes : 1 control-plane + 2 workers minimum.
+Outils IaC obligatoires : Packer pour les images, Terraform pour le provisionnement, Ansible pour la configuration et le déploiement applicatif.
+Versioning Git de l'ensemble des fichiers de configuration.
+Odoo accessible via Ingress HTTPS (certificats autosignés acceptés).
+Stockage persistant pour Odoo et PostgreSQL.
+Solution reproductible constituant la base d'un PRA.
+
+2. Mission 1 — Choix des technologies et justification
+2.1 Tableau de synthèse
+
+2.2 Justification de K3s
+K3s a été retenu face à RKE2, K0s et MicroK8s pour trois raisons principales. Premièrement, sa légèreté : il ne nécessite que 512 Mo de RAM sur le control-plane, ce qui est bien adapté aux ressources du laboratoire. Deuxièmement, ses composants intégrés (ServiceLB, Traefik, SQLite/etcd) réduisent significativement la complexité de déploiement et le nombre d'étapes Ansible. Troisièmement, son installation via un seul binaire et une commande curl rend le playbook de déploiement simple, idempotent et facilement maintenable. K3s est certifié CNCF et supporte les mêmes manifests Kubernetes qu'une distribution complète.
+2.3 Justification de l'approche baremetal Proxmox
+Proxmox VE étant disponible sur le laboratoire du campus, ce choix élimine tout coût cloud et tout délai administratif. Le provider Terraform bpg/proxmox permet un provisionnement entièrement déclaratif. Contrairement à une solution cloud managée, cette approche baremetal démontre une maîtrise complète de la chaîne IaC de bout en bout, du template d'image à l'applicatif déployé.
+2.4 Configuration matérielle des VMs
+
+3. Mission 2 — Organisation du projet
+3.1 Méthode et rôles
+L'équipe a adopté une méthode Scrum adaptée, organisée en sprints de 2 jours avec daily standup de 15 minutes, sprint review et rétrospective. Les rôles ont été définis comme suit :
+Scrum Master / Chef de projet : NABE Aboubacar — coordination générale, animation des rituels, suivi Kanban.
+Product Owner technique : Koné Ibrahim — validation des livrables, revue de code.
+Développeur Infrastructure (IaC) : Diallo Moussa — Packer, Terraform, Ansible K3s.
+Développeur Applicatif / Rédacteur : Traoré Fatoumata — Ansible Odoo, rédaction du dossier.
+3.2 Diagramme de Gantt
+
+Légende : ▣ = période de travail planifiée. D.M. = Diallo Moussa ; K.I. = Koné Ibrahim ; T.F. = Traoré Fatoumata ; N.A. = NABE Aboubacar.
+3.3 Environnement de travail inclusif
+3.3.1 Cadre général
+Une charte d'équipe a été rédigée dès le lancement du projet, définissant les valeurs communes : respect mutuel, bienveillance, non-discrimination et droit à l'erreur. Les canaux de communication sont diversifiés (chat textuel, audio, visioconférence) pour s'adapter aux préférences et contraintes de chaque membre.
+3.3.2 Accueil d'une personne en situation de handicap psychomoteur
+En cas d'intégration d'un·e collègue présentant un handicap psychomoteur (dyspraxie, tremblements essentiels, etc.), les mesures suivantes seraient mises en place après évaluation concertée avec la personne concernée et le référent handicap de l'établissement :
+Outils adaptés : éditeurs de code avec complétion avancée (VS Code + Copilot), dictée vocale, macros pour les commandes répétitives.
+Répartition des tâches orientée vers la conception, la relecture et la documentation plutôt que la saisie intensive au clavier.
+Délais de réalisation revus à la hausse pour les tâches assignées, en accord avec le reste de l'équipe.
+Réunions courtes et structurées, avec ordre du jour transmis 30 minutes en amont pour limiter la fatigue cognitive.
+3.3.3 Accueil d'une personne en situation de handicap visuel
+Compatibilité avec un lecteur d'écran (NVDA, JAWS) pour VS Code et les outils du projet.
+Documentation rédigée en Markdown (texte brut), sans tableaux complexes ni images sans texte alternatif.
+Revues de code menées à l'oral via partage d'écran avec narration des éléments affichés.
+3.3.4 Communication multiculturelle
+Notre équipe aux origines culturelles variées applique la communication non violente (CNV) pour les retours et critiques, pratique un tour de table équitable lors des rituels, et diffuse un récapitulatif hebdomadaire écrit pour les membres éventuellement absents ou en décalage horaire.
+
+4. Mission 3 — Suivi de l'avancement (Kanban)
+L'outil de gestion de projet retenu est Kanboard, solution open-source auto-hébergée sur le lab campus. Le tableau est organisé en quatre colonnes : À faire → En cours → Revue Technique → Terminé. Le principe de revue technique collective est appliqué systématiquement : aucune tâche ne passe en « Terminé » sans avoir été examinée par au minimum un autre membre de l'équipe.
+
+L'état présenté ci-dessus correspond à la livraison finale : l'ensemble des tâches ont été validées en revue technique collective avant clôture.
+
+5. Mission 4 — Préparation du template VM (Image Cloud Ubuntu + cloud-init)
+5.1 Approche retenue : image cloud officielle + script bash
+Plutôt qu'une installation ISO via Packer (plus longue, dépendante d'un serveur HTTP pour l'autoinstall), l'approche retenue utilise directement l'image cloud officielle Ubuntu 22.04 LTS au format qcow2, qui supporte nativement cloud-init. Le script setup/create-template.sh orchestre la création du template Proxmox (ID 9000) en ~3 minutes au lieu de 15–20 minutes avec Packer + ISO.
+Les fichiers Packer (répertoire packer/) sont conservés dans le dépôt comme approche alternative documentée, utilisables dans des environnements où l'image cloud officielle n'est pas disponible.
+5.2 Ce que crée le script create-template.sh
+Le script s'exécute en quatre phases successives sur le serveur Proxmox (en SSH root) :
+Téléchargement de l'image cloud officielle Ubuntu 22.04 Jammy (format qcow2, ~700 Mo).
+Création de la VM Proxmox avec : 2 vCPU, 2048 Mo RAM, bridge réseau vmbr1, QEMU Guest Agent activé.
+Configuration cloud-init par défaut : utilisateur ubuntu, IP DHCP (Terraform injectera l'IP statique au clonage), agent QEMU activé.
+Conversion en template Proxmox (qm template 9000) — prêt à être cloné par Terraform via clone { vm_id = 9000 }.
+5.3 Paramètres du template
+
+# Sur le serveur Proxmox (en SSH root)
+bash setup/create-template.sh
+
+
+6. Mission 5 — Terraform : provisionnement de l'infrastructure
+6.1 Principe et organisation
+Terraform est responsable du provisionnement de l'ensemble des 4 VMs sur Proxmox. Toutes les ressources sont déclarées de façon déclarative : Terraform calcule les modifications nécessaires, les présente en dry-run (plan), puis les applique. En cas de reconstruction post-incident, un simple terraform apply suffit à recréer l'infrastructure à l'identique depuis le template cloud-init.
+Le projet est organisé en six fichiers : providers.tf (configuration du provider bpg/proxmox), variables.tf (déclaration des paramètres), main.tf (ressources VMs), inventory.tf (génération de l'inventaire Ansible), outputs.tf (sorties), et un fichier template hosts.yml.tftpl. Les valeurs sensibles (mot de passe Proxmox, clé SSH) sont isolées dans terraform.tfvars, exclu du versioning via .gitignore.
+6.2 Fonctionnement du main.tf
+La ressource centrale est une proxmox_virtual_environment_vm déclarée avec for_each sur une map locale de 4 entrées : k3s-server (VMID 200, IP 10.10.10.10), k3s-worker-1 (201, .11), k3s-worker-2 (202, .12) et nfs-server (203, .13). Chaque VM clone le template 9000 (full clone), reçoit une IP statique via cloud-init, et est étiquetée avec son rôle. Le provider bpg/proxmox a été préféré à telmate/proxmox pour sa meilleure gestion de l'authentification par mot de passe et son support SSH natif.
+En sortie, le fichier inventory.tf utilise templatefile() pour générer automatiquement le fichier ansible/inventory/hosts.yml avec les IPs réelles des VMs. Cela garantit la cohérence entre l'état Terraform et l'inventaire Ansible sans intervention manuelle. La version K3s cible est paramétrée via la variable k3s_version (défaut : v1.29.2+k3s1).
+6.3 Workflow d'exécution
+Le déploiement suit quatre étapes : initialisation du provider (terraform init), validation syntaxique (terraform validate), planification avec aperçu des ressources à créer (terraform plan), puis application effective (terraform apply). La destruction complète de l'infrastructure est possible via terraform destroy, ce qui facilite les cycles de tests.
+
+7. Mission 6 — Ansible : déploiement de Kubernetes K3s
+7.1 Organisation des rôles Ansible
+Ansible prend en charge la configuration de toutes les VMs à partir de l'inventaire généré par Terraform. L'organisation suit une structure en rôles : common (configuration de base sur toutes les VMs), k3s-server (control-plane), k3s-agent (workers), nfs-server (stockage) et deploy-odoo (applicatif). Les secrets (mots de passe Odoo, PostgreSQL) sont gérés via Ansible Vault (vault.yml).
+7.2 Rôle common — Configuration de base
+Appliqué à toutes les VMs, ce rôle prépare l'environnement K3s : mise à jour APT, installation des paquets (curl, jq, nfs-common), configuration /etc/hosts pour la résolution inter-nœuds, désactivation du swap (requis par Kubernetes), chargement des modules noyau br_netfilter et overlay, et configuration sysctl (ip_forward, bridge-nf-call-iptables).
+7.3 Rôle k3s-server — Control-plane
+Installe K3s en mode serveur (version v1.29.2+k3s1) avec les options --write-kubeconfig-mode 644, --tls-san pour l'IP du control-plane, et --cluster-init. Après installation, le rôle attend que K3s soit opérationnel, récupère le node-token pour les workers, sauvegarde le kubeconfig et installe Helm sur le control-plane.
+7.4 Rôle k3s-agent — Workers
+Installe K3s en mode agent avec l'URL du serveur (https://10.10.10.10:6443) et le token récupéré. Les workers rejoignent le cluster séquentiellement (serial: 1) pour éviter les conflits, et chaque jonction est vérifiée via kubectl get nodes avant de passer au suivant.
+7.5 Résultat obtenu
+À l'issue du playbook, le cluster est opérationnel avec ses trois nœuds et les composants natifs K3s (CoreDNS, Traefik, ServiceLB, Metrics Server) en état Running :
+NAME               STATUS   ROLES                  VERSION
+k3s-control-plane  Ready    control-plane,master   v1.29.2+k3s1
+k3s-worker-1       Ready    <none>                 v1.29.2+k3s1
+k3s-worker-2       Ready    <none>                 v1.29.2+k3s1
+
+
+8. Mission 7 — Ansible : déploiement d'Odoo sur le cluster
+8.1 Approche : Ansible + kubernetes.core.helm sans cert-manager
+Le déploiement applicatif utilise la collection Ansible kubernetes.core (module helm) pour orchestrer deux charts Helm. Traefik est déjà intégré à K3s, il n'est pas redéployé. Les certificats TLS sont gérés via l'option ingress.selfSigned: true du chart Bitnami Odoo, sans cert-manager (PoC). Les mots de passe applicatifs sont gérés via Ansible Vault (vault.yml).
+8.2 Chaîne de déploiement
+Le playbook ansible/playbooks/deploy-odoo.yml orchestre trois étapes séquentielles :
+NFS Subdir External Provisioner (chart nfs-subdir-external-provisioner) : crée la StorageClass nfs-client pointant vers le serveur NFS (10.10.10.13). Le pod provisioner peut être placé sur un nœud spécifique via nodeSelector.
+Chart Bitnami Odoo (dépôt https://charts.bitnami.com/bitnami, namespace odoo) : déploie Odoo avec PostgreSQL intégré (sous-chart Bitnami), persistance sur nfs-client, service type ClusterIP (pas LoadBalancer pour éviter le statut <pending> sans cloud-controller), TLS autosigné via ingress.selfSigned: true, accès HTTPS via Traefik natif K3s. Les images conteneurs utilisent le dépôt bitnamilegacy (docker.io/bitnamilegacy/*) avec global.security.allowInsecureImages: true suite à la migration des tags Bitnami. Timeout Helm porté à 20 minutes pour le premier pull d'images sur cluster TP.
+Ingress Traefik : l'annotation traefik.ingress.kubernetes.io/router.entrypoints: web,websecure garantit l'accès aussi bien en HTTP qu'en HTTPS. L'URL finale est https://odoo.local (certificat autosigné — avertissement navigateur attendu en PoC).
+8.3 Validation du déploiement
+À l'issue du playbook, tous les pods sont en état Running, les PVCs sont liés aux volumes NFS, et Odoo est accessible depuis https://odoo.local. Le playbook destroy.yml permet la suppression propre des releases Helm et des namespaces.
+kubectl get pods -n odoo
+odoo-xxxxxxxxx     1/1   Running   0   1d
+odoo-postgresql-0  1/1   Running   0   1d
+
+
+9. Architecture globale de la solution
+9.1 Schéma d'architecture
+
+9.2 Composants et rôles
+
+9.3 Plan de Reprise d'Activité (PRA)
+L'Infrastructure as Code garantit une reproductibilité complète. En cas d'incident majeur, la procédure de reconstruction est entièrement scriptée et peut être exécutée par n'importe quel membre de l'équipe disposant des accès nécessaires :
+
+10. Gestion agile et communication d'équipe
+10.1 Rituels Scrum appliqués
+Daily Standup (15 min/jour) : chaque membre partage son avancement, ses objectifs du jour et ses éventuels blocages. Animé en rotation par le Scrum Master.
+Sprint Planning (début de chaque sprint de 2 jours) : découpage des tâches, estimation, attribution dans Kanboard.
+Sprint Review : démonstration des livrables produits, validation collective.
+Sprint Retrospective : identification des points d'amélioration du processus via le format Start / Stop / Continue.
+10.2 Outils de communication et de collaboration
+
+10.3 Animation des réunions à distance
+Pour maintenir l'engagement et la dynamique d'équipe en télétravail, les pratiques suivantes ont été systématisées : envoi de l'ordre du jour 30 minutes avant chaque réunion, partage d'écran lors des présentations techniques, rotation du rôle de facilitateur, tour de table structuré lors des standups, et enregistrement des réunions importantes (avec consentement de tous) pour les membres absents.
+
+11. Résultats, tests et difficultés rencontrées
+11.1 Tests de résilience
+Suppression forcée d'un pod Odoo : recréation automatique par le scheduler K3s en moins de 30 secondes, sans perte de données grâce au stockage NFS persistant.
+Redémarrage d'un worker : le nœud rejoint automatiquement le cluster après redémarrage, les pods sont redistribués sans intervention.
+Simulation de panne NFS : Odoo affiche une erreur transitoire puis reprend automatiquement dès la restauration du serveur NFS.
+11.2 Difficultés rencontrées et solutions apportées
+
+12. Conclusion
+Ce projet a permis de livrer avec succès le Proof of Concept demandé par COGIP pour le groupe Tesker : un cluster Kubernetes K3s opérationnel, entièrement déployé via une chaîne IaC (create-template.sh / Terraform / Ansible), hébergeant l'ERP Odoo accessible en HTTPS via Traefik Ingress natif avec stockage persistant NFS. L'ensemble des fichiers est versionné dans le dépôt Git github.com/PeterMacgonagan2803/mspr-cogip-k8s et documenté dans les annexes de ce dossier.
+Les apports principaux du projet sont une infrastructure entièrement reproductible en environ 20 minutes (base solide pour le PRA de COGIP/Tesker), une gestion de projet agile appliquée avec rigueur (Scrum, Kanban, revues techniques), et un environnement de travail inclusif formalisé dès le lancement du projet. Le script deploy-all.py et les webhooks associés matérialisent la démarche d'automatisation et de traçabilité demandée.
+Pour une mise en production, nous recommandons à COGIP : le passage à 3 control-planes pour la haute disponibilité, le remplacement des certificats autosignés par Let's Encrypt, l'intégration d'une stack de supervision (Prometheus + Grafana) et de centralisation des logs (Loki), ainsi que la mise en place de sauvegardes automatiques via Velero.
+
+Annexe A — Code source Packer complet
+A.1 ubuntu-22.04.pkr.hcl
+packer {
+  required_plugins {
+    proxmox = {
+      version = ">= 1.1.3"
+      source  = "github.com/hashicorp/proxmox"
+    }
+  }
+}
+
+variable "proxmox_api_url"          { type = string }
+variable "proxmox_api_token_id"      { type = string }
+variable "proxmox_api_token_secret"  { type = string; sensitive = true }
+variable "proxmox_node"              { type = string; default = "pve" }
+variable "ssh_public_key"             { type = string }
+
+source "proxmox-iso" "ubuntu-22-04" {
+  proxmox_url              = var.proxmox_api_url
+  username                 = var.proxmox_api_token_id
+  token                    = var.proxmox_api_token_secret
+  insecure_skip_tls_verify = true
+  node                     = var.proxmox_node
+
+  vm_name              = "ubuntu-22-04-template"
+  template_description = "Ubuntu 22.04 LTS - K8s base image"
+  vm_id  = 9000
+  cores  = 2
+  memory = 2048
+  scsi_controller = "virtio-scsi-pci"
+
+  disks {
+    disk_size    = "20G"
+    storage_pool = "local-lvm"
+    type         = "virtio"
+  }
+  network_adapters {
+    model  = "virtio"
+    bridge = "vmbr0"
+  }
+
+  iso_url          = "https://releases.ubuntu.com/22.04/ubuntu-22.04.4-live-server-amd64.iso"
+  iso_checksum     = "sha256:45f873de9f8cb637345d6e66a583762730bbea30277ef7b32c9c3bd6700a32b2"
+  iso_storage_pool = "local"
+  unmount_iso      = true
+
+  cloud_init              = true
+  cloud_init_storage_pool = "local-lvm"
+
+  boot_command = [
+    "<esc><wait>", "e<wait>", "<down><down><down><end>",
+    " autoinstall ds=nocloud-net\\;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/",
+    "<F10>"
+  ]
+  boot_wait      = "5s"
+  http_directory = "http"
+
+  ssh_username         = "ubuntu"
+  ssh_private_key_file = "~/.ssh/id_rsa"
+  ssh_timeout          = "30m"
+}
+
+build {
+  sources = ["source.proxmox-iso.ubuntu-22-04"]
+  provisioner "shell" {
+    scripts         = ["scripts/base.sh", "scripts/cleanup.sh"]
+    execute_command = "sudo bash {{ .Path }}"
+  }
+}
+A.2 http/user-data (cloud-init autoinstall)
+#cloud-config
+autoinstall:
+  version: 1
+  locale: fr_FR
+  keyboard:
+    layout: fr
+  network:
+    network:
+      version: 2
+      ethernets:
+        ens18:
+          dhcp4: true
+  identity:
+    hostname: ubuntu-template
+    username: ubuntu
+    password: "$6$rounds=4096$..." # hash du mot de passe temporaire
+  ssh:
+    install-server: true
+    authorized-keys:
+      - "ssh-rsa AAAA... ubuntu@cogip-infra"
+    allow-pw: false
+  storage:
+    layout:
+      name: lvm
+  late-commands:
+    - echo "ubuntu ALL=(ALL) NOPASSWD:ALL" > /target/etc/sudoers.d/ubuntu
+A.3 scripts/base.sh
+#!/bin/bash
+set -euxo pipefail
+
+apt-get update && apt-get upgrade -y
+apt-get install -y curl wget git vim python3 python3-pip \
+  apt-transport-https ca-certificates gnupg lsb-release \
+  qemu-guest-agent open-iscsi nfs-common
+
+systemctl enable qemu-guest-agent
+
+# Désactivation du swap
+swapoff -a
+sed -i "/\sswap\s/d" /etc/fstab
+
+# Modules noyau requis par Kubernetes
+cat <<EOF | tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+modprobe overlay && modprobe br_netfilter
+
+# Paramètres sysctl
+cat <<EOF | tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables  = 1
+net.ipv4.ip_forward                 = 1
+EOF
+sysctl --system
+
+# Nettoyage avant snapshot
+apt-get autoremove -y && apt-get clean
+rm -f /etc/ssh/ssh_host_*
+truncate -s 0 /etc/machine-id
+
+Annexe B — Code source Terraform complet
+B.1 providers.tf
+terraform {
+  required_providers {
+    proxmox = {
+      source  = "bpg/proxmox"
+      version = "~> 0.55"
+    }
+  }
+  required_version = ">= 1.6.0"
+}
+
+provider "proxmox" {
+  endpoint  = var.proxmox_api_url
+  api_token = "${var.proxmox_token_id}=${var.proxmox_token_secret}"
+  insecure  = true
+}
+B.2 variables.tf
+variable "proxmox_api_url"      { type = string }
+variable "proxmox_token_id"     { type = string }
+variable "proxmox_token_secret" { type = string; sensitive = true }
+variable "proxmox_node"         { type = string; default = "pve" }
+variable "template_vm_id"       { type = number; default = 9000 }
+variable "ssh_public_key"       { type = string }
+variable "network_gateway"      { type = string; default = "192.168.1.1" }
+variable "dns_server"           { type = string; default = "1.1.1.1" }
+B.3 main.tf
+locals {
+  vms = {
+    "k3s-cp-01"     = { vm_id=101, ip="192.168.1.101", cores=2, memory=4096, disk_gb=20, role="control_plane" }
+    "k3s-worker-01" = { vm_id=102, ip="192.168.1.102", cores=2, memory=4096, disk_gb=30, role="worker" }
+    "k3s-worker-02" = { vm_id=103, ip="192.168.1.103", cores=2, memory=4096, disk_gb=30, role="worker" }
+    "nfs-server"    = { vm_id=104, ip="192.168.1.104", cores=2, memory=2048, disk_gb=50, role="nfs" }
+  }
+}
+
+resource "proxmox_virtual_environment_vm" "nodes" {
+  for_each  = local.vms
+  name      = each.key
+  vm_id     = each.value.vm_id
+  node_name = var.proxmox_node
+  tags      = ["k3s", each.value.role, "terraform"]
+
+  clone { vm_id = var.template_vm_id; full = true }
+
+  cpu    { cores = each.value.cores; type = "x86-64-v2-AES" }
+  memory { dedicated = each.value.memory }
+
+  disk {
+    datastore_id = "local-lvm"
+    interface    = "virtio0"
+    size         = each.value.disk_gb
+  }
+
+  network_device { bridge = "vmbr0"; model = "virtio" }
+
+  initialization {
+    ip_config {
+      ipv4 { address = "${each.value.ip}/24"; gateway = var.network_gateway }
+    }
+    user_account { username = "ubuntu"; keys = [var.ssh_public_key] }
+    dns { servers = [var.dns_server] }
+  }
+
+  operating_system { type = "l26" }
+  agent   { enabled = true }
+  on_boot = true
+}
+B.4 outputs.tf
+output "vm_ips" {
+  value = { for k, v in proxmox_virtual_environment_vm.nodes : k => v.ipv4_addresses[1][0] }
+}
+
+resource "local_file" "ansible_inventory" {
+  content = templatefile("${path.module}/inventory.tpl", {
+    cp_ip    = proxmox_virtual_environment_vm.nodes["k3s-cp-01"].ipv4_addresses[1][0]
+    worker01 = proxmox_virtual_environment_vm.nodes["k3s-worker-01"].ipv4_addresses[1][0]
+    worker02 = proxmox_virtual_environment_vm.nodes["k3s-worker-02"].ipv4_addresses[1][0]
+    nfs_ip   = proxmox_virtual_environment_vm.nodes["nfs-server"].ipv4_addresses[1][0]
+  })
+  filename = "../ansible/inventory/hosts.ini"
+}
+B.5 inventory.tpl
+[control_plane]
+k3s-cp-01 ansible_host=${cp_ip} ansible_user=ubuntu
+
+[workers]
+k3s-worker-01 ansible_host=${worker01} ansible_user=ubuntu
+k3s-worker-02 ansible_host=${worker02} ansible_user=ubuntu
+
+[nfs]
+nfs-server ansible_host=${nfs_ip} ansible_user=ubuntu
+
+[k3s_cluster:children]
+control_plane
+workers
+
+Annexe C — Playbooks Ansible K3s complets
+C.1 01-nfs.yml
+---
+- name: Configuration du serveur NFS
+  hosts: nfs
+  become: true
+  tasks:
+
+    - name: Installation de nfs-kernel-server
+      ansible.builtin.apt:
+        name: nfs-kernel-server
+        state: present
+        update_cache: true
+
+    - name: Création du répertoire de partage NFS
+      ansible.builtin.file:
+        path: "{{ nfs_share_path }}"
+        state: directory
+        owner: nobody
+        group: nogroup
+        mode: "0777"
+
+    - name: Configuration de l'export NFS
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        line: "{{ nfs_share_path }} 192.168.1.0/24(rw,sync,no_subtree_check,no_root_squash)"
+        create: true
+
+    - name: Application des exports
+      ansible.builtin.command: exportfs -ra
+
+    - name: Démarrage et activation de nfs-kernel-server
+      ansible.builtin.systemd:
+        name: nfs-kernel-server
+        state: started
+        enabled: true
+C.2 02-k3s-install.yml
+---
+- name: Installation K3s — control-plane
+  hosts: control_plane
+  become: true
+  tasks:
+
+    - name: Installation de K3s
+      ansible.builtin.shell: |
+        curl -sfL https://get.k3s.io | \
+          INSTALL_K3S_VERSION="{{ k3s_version }}" \
+          K3S_TOKEN="{{ lookup('password', '/tmp/k3s_token chars=ascii_letters,digits length=64') }}" \
+          sh -s - server --write-kubeconfig-mode 644
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Attente du node-token
+      ansible.builtin.wait_for:
+        path: /var/lib/rancher/k3s/server/node-token
+        state: present
+        timeout: 120
+
+    - name: Lecture du token K3s
+      ansible.builtin.slurp:
+        src: "{{ k3s_token_file }}"
+      register: k3s_token_b64
+
+    - name: Enregistrement du token en fact
+      ansible.builtin.set_fact:
+        k3s_token: "{{ k3s_token_b64.content | b64decode | trim }}"
+
+    - name: Récupération du kubeconfig
+      ansible.builtin.fetch:
+        src:  /etc/rancher/k3s/k3s.yaml
+        dest: "~/.kube/config"
+        flat: true
+
+- name: Jonction des workers
+  hosts: workers
+  become: true
+  tasks:
+
+    - name: Installation K3s agent
+      ansible.builtin.shell: |
+        curl -sfL https://get.k3s.io | \
+          INSTALL_K3S_VERSION="{{ k3s_version }}" \
+          K3S_URL="https://{{ k3s_server_ip }}:6443" \
+          K3S_TOKEN="{{ hostvars[groups['control_plane'][0]]['k3s_token'] }}" \
+          sh -s - agent
+      args:
+        creates: /usr/local/bin/k3s-agent
+
+    - name: Activation du service K3s agent
+      ansible.builtin.systemd:
+        name: k3s-agent
+        state: started
+        enabled: true
+
+- name: Validation du cluster
+  hosts: control_plane
+  become: true
+  tasks:
+
+    - name: Vérification — tous les nœuds Ready
+      ansible.builtin.command: kubectl get nodes --no-headers
+      register: nodes_status
+      until: nodes_status.stdout_lines | length == 3
+             and nodes_status.stdout is not search("NotReady")
+      retries: 20
+      delay: 15
+
+    - name: Affichage de l'état du cluster
+      ansible.builtin.debug:
+        msg: "{{ nodes_status.stdout_lines }}"
+
+Annexe D — Playbook Ansible Odoo complet (03-odoo.yml)
+---
+- name: Déploiement Odoo sur le cluster K3s
+  hosts: control_plane
+  become: true
+  collections:
+    - kubernetes.core
+  tasks:
+
+  # ── 1. Helm ──────────────────────────────────────────────────────
+    - name: Téléchargement du script Helm
+      ansible.builtin.get_url:
+        url:  https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        dest: /tmp/get-helm.sh
+        mode: "0755"
+
+    - name: Installation de Helm
+      ansible.builtin.shell: /tmp/get-helm.sh
+      args:
+        creates: /usr/local/bin/helm
+
+  # ── 2. NFS StorageClass ──────────────────────────────────────────
+    - name: Ajout dépôt nfs-subdir-external-provisioner
+      kubernetes.core.helm_repository:
+        name:     nfs-subdir-external-provisioner
+        repo_url: https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+
+    - name: Déploiement NFS provisionner
+      kubernetes.core.helm:
+        name:              nfs-subdir-external-provisioner
+        chart_ref:         nfs-subdir-external-provisioner/nfs-subdir-external-provisioner
+        release_namespace: kube-system
+        kubeconfig:        /etc/rancher/k3s/k3s.yaml
+        values:
+          nfs:
+            server: "{{ nfs_server_ip }}"
+            path:   "{{ nfs_share_path }}"
+          storageClass:
+            name:          nfs-client
+            defaultClass:  true
+            reclaimPolicy: Retain
+
+  # ── 3. cert-manager ──────────────────────────────────────────────
+    - name: Ajout dépôt jetstack
+      kubernetes.core.helm_repository:
+        name: jetstack
+        repo_url: https://charts.jetstack.io
+
+    - name: Déploiement cert-manager
+      kubernetes.core.helm:
+        name:              cert-manager
+        chart_ref:         jetstack/cert-manager
+        chart_version:     "v1.14.4"
+        release_namespace: cert-manager
+        create_namespace:  true
+        kubeconfig:        /etc/rancher/k3s/k3s.yaml
+        values:
+          installCRDs: true
+
+    - name: ClusterIssuer autosigné
+      kubernetes.core.k8s:
+        kubeconfig: /etc/rancher/k3s/k3s.yaml
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: ClusterIssuer
+          metadata:
+            name: selfsigned-issuer
+          spec:
+            selfSigned: {}
+
+  # ── 4. Traefik ───────────────────────────────────────────────────
+    - name: Ajout dépôt Traefik
+      kubernetes.core.helm_repository:
+        name: traefik
+        repo_url: https://helm.traefik.io/traefik
+
+    - name: Déploiement Traefik
+      kubernetes.core.helm:
+        name:              traefik
+        chart_ref:         traefik/traefik
+        release_namespace: traefik
+        create_namespace:  true
+        kubeconfig:        /etc/rancher/k3s/k3s.yaml
+        values:
+          ports:
+            web:
+              redirectTo: websecure
+            websecure:
+              tls:
+                enabled: true
+          service:
+            type: LoadBalancer
+
+  # ── 5. Namespace + Odoo ──────────────────────────────────────────
+    - name: Namespace odoo
+      kubernetes.core.k8s:
+        kubeconfig: /etc/rancher/k3s/k3s.yaml
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: odoo
+
+    - name: Ajout dépôt Bitnami
+      kubernetes.core.helm_repository:
+        name: bitnami
+        repo_url: https://charts.bitnami.com/bitnami
+
+    - name: Déploiement Odoo
+      kubernetes.core.helm:
+        name:              odoo
+        chart_ref:         bitnami/odoo
+        chart_version:     "26.0.0"
+        release_namespace: odoo
+        kubeconfig:        /etc/rancher/k3s/k3s.yaml
+        wait:              true
+        timeout:           "600s"
+        values:
+          odooEmail:    admin@cogip.local
+          odooPassword: "CogipSecure2024!"
+          service:
+            type: ClusterIP
+          persistence:
+            enabled:      true
+            storageClass: nfs-client
+            size:         8Gi
+          postgresql:
+            enabled: true
+            primary:
+              persistence:
+                enabled:      true
+                storageClass: nfs-client
+                size:         4Gi
+          ingress:
+            enabled: false
+
+  # ── 6. Certificat TLS + IngressRoute ─────────────────────────────
+    - name: Certificat TLS autosigné pour Odoo
+      kubernetes.core.k8s:
+        kubeconfig: /etc/rancher/k3s/k3s.yaml
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name:      odoo-tls
+            namespace: odoo
+          spec:
+            secretName: odoo-tls-secret
+            issuerRef:
+              name: selfsigned-issuer
+              kind: ClusterIssuer
+            dnsNames:
+              - "{{ odoo_domain }}"
+
+    - name: IngressRoute Traefik pour Odoo
+      kubernetes.core.k8s:
+        kubeconfig: /etc/rancher/k3s/k3s.yaml
+        state: present
+        definition:
+          apiVersion: traefik.containo.us/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name:      odoo-ingressroute
+            namespace: odoo
+          spec:
+            entryPoints: [websecure]
+            routes:
+              - match: Host(`{{ odoo_domain }}`)
+                kind: Rule
+                services:
+                  - name: odoo
+                    port: 8069
+            tls:
+              secretName: odoo-tls-secret
+
+Annexe E — Références et ressources
+Documentation K3s officielle : https://docs.k3s.io
+Provider Terraform Proxmox (bpg) : https://registry.terraform.io/providers/bpg/proxmox
+Packer Proxmox builder : https://developer.hashicorp.com/packer/plugins/builders/proxmox
+Collection Ansible kubernetes.core : https://galaxy.ansible.com/kubernetes/core
+Chart Helm Bitnami Odoo : https://artifacthub.io/packages/helm/bitnami/odoo
+Documentation Traefik Kubernetes : https://doc.traefik.io/traefik/providers/kubernetes-ingress/
+Documentation cert-manager : https://cert-manager.io/docs/
+nfs-subdir-external-provisioner : https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
+Communication Non Violente (CNV) : https://www.cnvc.org
+Aménagements raisonnables et RQTH : https://travail-emploi.gouv.fr/emploi-et-insertion/emploi-et-handicap
